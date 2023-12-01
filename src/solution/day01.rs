@@ -1,3 +1,4 @@
+use regex::{Match, Regex};
 use crate::solution::Solution;
 
 pub struct Day01 {
@@ -25,6 +26,41 @@ impl Solution for Day01 {
 	}
 
 	fn part_two(&self) -> Result<String, String> {
-		Err("placeholder for day 1 / part 2".to_string())
+		let lines = self.read_file_as_lines()?;
+		let regex = match Regex::new(r"^(\d|one|two|three|four|five|six|seven|eight|nine)") {
+			Ok(r) => Ok(r),
+			Err(_) => Err("Failed to create regex"),
+		}?;
+
+		let result = lines.iter().map(|s| s.to_lowercase()).filter_map(|line| {
+			let numbers = (0..line.len()).filter_map(|start| {
+				let slice = line.chars().skip(start).collect::<String>();
+				parse_line(regex.find(&slice)?)
+			}).collect::<Vec<i32>>();
+
+			numbers.first()
+				.zip(numbers.last())
+				.map(|(first, last)| format!("{}{}", first, last))
+				.and_then(|s| s.parse::<u32>().ok())
+		}).sum::<u32>();
+
+		Ok(format!("{}", result))
 	}
+}
+
+fn parse_line(
+	m: Match,
+) -> Option<i32> {
+	match m.as_str() {
+		"1" | "one" => Ok(1),
+		"2" | "two" => Ok(2),
+		"3" | "three" => Ok(3),
+		"4" | "four" => Ok(4),
+		"5" | "five" => Ok(5),
+		"6" | "six" => Ok(6),
+		"7" | "seven" => Ok(7),
+		"8" | "eight" => Ok(8),
+		"9" | "nine" => Ok(9),
+		c => Err(format!("Invalid number: {}", c)),
+	}.ok()
 }
