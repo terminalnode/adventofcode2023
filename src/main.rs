@@ -37,7 +37,7 @@ fn main() {
 	};
 
 	let file = match matches.opt_str("f") {
-		None => format!("day{:02}.txt", day),
+		None => format!("day{day:02}.txt"),
 		Some(file) => file,
 	};
 
@@ -68,8 +68,8 @@ fn run<F>(
 ) where F: Fn() -> Result<String, String> {
 	println!("Running part {}...", part);
 	match function() {
-		Ok(result) => println!("{}", result),
-		Err(error) => println!("Error: {}", error),
+		Ok(result) => println!("{result}"),
+		Err(error) => println!("Error: {error}"),
 	}
 }
 
@@ -77,7 +77,7 @@ fn print_usage(
 	program: &str,
 	opts: &Options,
 ) {
-	let brief = format!("Usage: {} [options]", program);
+	let brief = format!("Usage: {program} [options]");
 	println!("{}", opts.usage(&brief))
 }
 
@@ -86,7 +86,7 @@ fn print_error(
 	program: &str,
 	opts: &Options,
 ) -> ! {
-	println!("{}\n", error);
+	println!("{error}\n");
 	print_usage(program, opts);
 	exit(1)
 }

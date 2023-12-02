@@ -16,7 +16,7 @@ pub trait Solution {
 	fn read_file_as_string(&self) -> Result<String, String> {
 		match fs::read_to_string(self.get_file_path()) {
 			Ok(s) => Ok(s),
-			Err(s) => Err(format!("Failed to read file: {}", s)),
+			Err(s) => Err(format!("Failed to read file: {s}")),
 		}
 	}
 }

@@ -18,11 +18,11 @@ impl Solution for Day01 {
 
 				digits.first()
 					.zip(digits.last())
-					.map(|(first, last)| format!("{}{}", first, last))
+					.map(|(first, last)| format!("{first}{last}"))
 					.and_then(|s| s.parse::<u32>().ok())
 			}).sum::<u32>();
 
-		Ok(format!("{}", result))
+		Ok(result.to_string())
 	}
 
 	fn part_two(&self) -> Result<String, String> {
@@ -40,11 +40,11 @@ impl Solution for Day01 {
 
 			numbers.first()
 				.zip(numbers.last())
-				.map(|(first, last)| format!("{}{}", first, last))
+				.map(|(first, last)| format!("{first}{last}"))
 				.and_then(|s| s.parse::<u32>().ok())
 		}).sum::<u32>();
 
-		Ok(format!("{}", result))
+		Ok(result.to_string())
 	}
 }
 
@@ -61,6 +61,6 @@ fn parse_line(
 		"7" | "seven" => Ok(7),
 		"8" | "eight" => Ok(8),
 		"9" | "nine" => Ok(9),
-		c => Err(format!("Invalid number: {}", c)),
+		c => Err(format!("Invalid number: {c}")),
 	}.ok()
 }
