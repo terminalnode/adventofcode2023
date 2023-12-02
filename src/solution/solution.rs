@@ -13,14 +13,9 @@ pub trait Solution {
 		Err("Solution not yet implemented!".to_string())
 	}
 
-	fn read_file_as_lines(&self) -> Result<Vec<String>, String> {
+	fn read_file_as_string(&self) -> Result<String, String> {
 		match fs::read_to_string(self.get_file_path()) {
-			Ok(s) => {
-				let split = s.split("\n")
-					.map(|s| s.to_string())
-					.collect::<Vec<String>>();
-				Ok(split)
-			}
+			Ok(s) => Ok(s),
 			Err(s) => Err(format!("Failed to read file: {}", s)),
 		}
 	}

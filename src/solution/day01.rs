@@ -10,29 +10,29 @@ impl Solution for Day01 {
 	fn get_file_name(&self) -> &str { &self.file }
 
 	fn part_one(&self) -> Result<String, String> {
-		let lines = self.read_file_as_lines()?;
-		let result = lines.iter().filter_map(|line| {
-			let digits = line.chars()
-				.filter(|c| c.is_digit(10))
-				.collect::<Vec<char>>();
+		let result = self.read_file_as_string()?.lines()
+			.filter_map(|line| {
+				let digits = line.chars()
+					.filter(|c| c.is_digit(10))
+					.collect::<Vec<char>>();
 
-			digits.first()
-				.zip(digits.last())
-				.map(|(first, last)| format!("{}{}", first, last))
-				.and_then(|s| s.parse::<u32>().ok())
-		}).sum::<u32>();
+				digits.first()
+					.zip(digits.last())
+					.map(|(first, last)| format!("{}{}", first, last))
+					.and_then(|s| s.parse::<u32>().ok())
+			}).sum::<u32>();
 
 		Ok(format!("{}", result))
 	}
 
 	fn part_two(&self) -> Result<String, String> {
-		let lines = self.read_file_as_lines()?;
 		let regex = match Regex::new(r"^(\d|one|two|three|four|five|six|seven|eight|nine)") {
 			Ok(r) => Ok(r),
 			Err(_) => Err("Failed to create regex"),
 		}?;
 
-		let result = lines.iter().map(|s| s.to_lowercase()).filter_map(|line| {
+		let result = self.read_file_as_string()?.lines()
+			.map(|s| s.to_lowercase()).filter_map(|line| {
 			let numbers = (0..line.len()).filter_map(|start| {
 				let slice = line.chars().skip(start).collect::<String>();
 				parse_line(regex.find(&slice)?)
