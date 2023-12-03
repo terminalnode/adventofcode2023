@@ -2,9 +2,9 @@ use std::env;
 use std::process::exit;
 use getopts::Options;
 use solution::{
-	Day01, Day02, Solution,
+	Day01, Day02, Day03,
+	Solution, PlaceholderSolution,
 };
-use crate::solution::PlaceholderSolution;
 
 mod solution;
 
@@ -46,6 +46,7 @@ fn main() {
 	let solution: Box<dyn Solution> = match day {
 		1 => Box::new(Day01::new(&file)),
 		2 => Box::new(Day02::new(&file)),
+		3 => Box::new(Day03::new(&file)),
 		_ => Box::new(PlaceholderSolution::new(&file)),
 	};
 
