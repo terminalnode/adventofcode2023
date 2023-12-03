@@ -38,7 +38,7 @@ impl Day03 {
 		num_map: &CharMap,
 	) -> Option<(Point, usize)> {
 		let (mut x, y) = point;
-		let y = y + 0; // copy y
+		let y = *y; // copy y
 		if !num_map.contains_key(&(x, y)) { return None; }
 
 		// Find start.. lol
@@ -60,6 +60,18 @@ impl Day03 {
 
 		Some(((x, y), number))
 	}
+
+	fn get_neighbors(
+		&self,
+		point: &Point,
+	) -> Vec<Point> {
+		let (x, y) = point;
+		vec![
+			(x - 1, y - 1), (x + 0, y - 1), (x + 1, y - 1),
+			(x - 1, y + 0), (x + 1, y + 0),
+			(x - 1, y + 1), (x + 0, y + 1), (x + 1, y + 1),
+		]
+	}
 }
 
 impl Solution for Day03 {
@@ -70,19 +82,14 @@ impl Solution for Day03 {
 		let (char_map, num_map) = self.parse_input()?;
 		let mut result_map = HashMap::new();
 
-		char_map.keys().for_each(|(x, y)| {
-			let x = *x;
-			let y = *y;
-			vec![
-				(x - 1, y - 1), (x, y - 1), (x + 1, y - 1),
-				(x - 1, y), (x + 1, y),
-				(x - 1, y + 1), (x, y + 1), (x + 1, y + 1),
-			].iter().for_each(|point| {
-				self.get_horizontal_number(point, &num_map)
-					.and_then(|(p, v)| result_map.insert(p, v))
-				;
+		char_map.keys()
+			.for_each(|point| {
+				self.get_neighbors(point).iter().for_each(|point| {
+					self.get_horizontal_number(point, &num_map)
+						.and_then(|(p, v)| result_map.insert(p, v))
+					;
+				});
 			});
-		});
 
 		Ok(result_map.values().sum::<usize>().to_string())
 	}
@@ -93,22 +100,14 @@ impl Solution for Day03 {
 
 		char_map.iter()
 			.filter(|(_, &c)| { c == '*' })
-			.for_each(|((x, y), _)| {
-				let x = *x;
-				let y = *y;
+			.for_each(|(point, _)| {
 				let mut result_map = HashMap::new();
-				vec![
-					(x - 1, y - 1), (x, y - 1), (x + 1, y - 1),
-					(x - 1, y), (x + 1, y),
-					(x - 1, y + 1), (x, y + 1), (x + 1, y + 1),
-				].iter().for_each(|point| {
+				self.get_neighbors(point).iter().for_each(|point| {
 					self.get_horizontal_number(point, &num_map)
 						.and_then(|(p, v)| result_map.insert(p, v));
 				});
 
-				if result_map.len() == 2 {
-					sum += result_map.values().product::<usize>();
-				}
+				if result_map.len() == 2 { sum += result_map.values().product::<usize>(); }
 			});
 
 		Ok(sum.to_string())
