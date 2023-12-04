@@ -53,4 +53,18 @@ impl Solution for Day04 {
 		}).sum::<usize>();
 		Ok(result.to_string())
 	}
+
+	fn part_two(&self) -> Result<String, String> {
+		let cards = self.parse()?;
+		let mut card_count = (0..cards.len()).map(|_| 1).collect::<Vec<usize>>();
+		let mut result = 0;
+		cards.iter().for_each(|card| {
+			let wins = card.tickets.intersection(&card.winners).count();
+			let count = card_count[card.id - 1];
+			result += count;
+			(0..wins).for_each(|i| card_count[card.id + i] += count);
+		});
+
+		Ok(result.to_string())
+	}
 }
