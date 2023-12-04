@@ -2,7 +2,7 @@ use std::env;
 use std::process::exit;
 use getopts::Options;
 use solution::{
-	Day01, Day02, Day03,
+	Day01, Day02, Day03, Day04,
 	Solution, PlaceholderSolution,
 };
 
@@ -47,6 +47,7 @@ fn main() {
 		1 => Box::new(Day01::new(&file)),
 		2 => Box::new(Day02::new(&file)),
 		3 => Box::new(Day03::new(&file)),
+		4 => Box::new(Day04::new(&file)),
 		_ => Box::new(PlaceholderSolution::new(&file)),
 	};
 
