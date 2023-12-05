@@ -1,4 +1,5 @@
 use crate::solution::Solution;
+use rayon::prelude::*;
 
 pub struct Day05 {
 	file: String,
@@ -120,6 +121,27 @@ impl Solution for Day05 {
 			.map(|seed| self.seed_to_location(&input, *seed))
 			.min()
 			.ok_or("missing seed values!".to_string())?;
+
+		Ok(min.to_string())
+	}
+
+	fn part_two(&self) -> Result<String, String> {
+		let input = self.parse()?;
+
+		let mut seeds = input.seeds.clone();
+		let mut seed_ranges: Vec<(u64, u64)> = Vec::new();
+		while seeds.len() > 0 {
+			let s1 = seeds.remove(0);
+			let s2 = seeds.remove(0);
+			seed_ranges.push((s1, s2));
+		}
+
+		// Hope you have a lot of cores. :)
+		let min = seed_ranges.par_iter().filter_map(|(start, size)| {
+			(0..*size).into_par_iter().map(|offset| {
+				self.seed_to_location(&input, start + offset)
+			}).min()
+		}).min().ok_or("missing seed values!".to_string())?;
 
 		Ok(min.to_string())
 	}
