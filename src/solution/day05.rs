@@ -1,5 +1,6 @@
 use crate::solution::Solution;
 use rayon::prelude::*;
+use crate::solution::solution::extract_numbers;
 
 pub struct Day05 {
 	file: String,
@@ -40,7 +41,7 @@ impl Day05 {
 
 		let seeds = match lines.next() {
 			None => Err("failed to parse seeds".to_string()),
-			Some(s) => Ok(self.extract_numbers(s)?)
+			Some(s) => Ok(extract_numbers::<Vec<u64>, _>(s)?)
 		}?;
 		lines.next(); lines.next(); // skip empty line and first descriptor
 
@@ -56,7 +57,7 @@ impl Day05 {
 				continue;
 			}
 
-			let numbers = self.extract_numbers(line)?;
+			let numbers = extract_numbers::<Vec<u64>, _>(line)?;
 			current_range.push(RangeMapping {
 				destination_start: numbers[0],
 				source_start: numbers[1],
@@ -74,16 +75,6 @@ impl Day05 {
 			temperature_to_humidity: ranges.remove(0),
 			humidity_to_location: current_range,
 		})
-	}
-
-	fn extract_numbers(
-		&self,
-		list: &str,
-	) -> Result<Vec<u64>, String> {
-		let numbers = list.split_whitespace()
-			.filter_map(|num| num.parse::<u64>().ok())
-			.collect::<Vec<u64>>();
-		Ok(numbers)
 	}
 
 	fn map_with_ranges(

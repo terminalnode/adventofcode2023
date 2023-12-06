@@ -1,4 +1,5 @@
 use std::fs;
+use std::str::FromStr;
 
 pub trait Solution {
 	fn new(filename: &str) -> Self where Self: Sized;
@@ -26,4 +27,16 @@ pub struct PlaceholderSolution {}
 impl Solution for PlaceholderSolution {
 	fn new(_: &str) -> Self { PlaceholderSolution {} }
 	fn get_file_name(&self) -> &str { panic!("Can't get file name for placeholder solution") }
+}
+
+pub fn extract_numbers<C, T>(
+	list: &str,
+) -> Result<C, String>
+	where T: FromStr,
+				C: FromIterator<T>,
+{
+	let numbers = list.split_whitespace()
+		.filter_map(|num| num.parse::<T>().ok())
+		.collect::<C>();
+	Ok(numbers)
 }

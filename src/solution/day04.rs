@@ -1,5 +1,6 @@
 use std::collections::HashSet;
 use crate::solution::Solution;
+use crate::solution::solution::extract_numbers;
 
 pub struct Day04 {
 	file: String,
@@ -23,22 +24,12 @@ impl Day04 {
 
 			Some(Card {
 				id: card_num,
-				winners: self.extract_numbers(winners_str).ok()?,
-				tickets: self.extract_numbers(tickets_str).ok()?,
+				winners: extract_numbers::<HashSet<usize>, _>(winners_str).ok()?,
+				tickets: extract_numbers::<HashSet<usize>, _>(tickets_str).ok()?,
 			})
 		}).collect();
 
 		Ok(cards)
-	}
-
-	fn extract_numbers(
-		&self,
-		list: &str,
-	) -> Result<HashSet<usize>, String> {
-		let numbers = list.split_whitespace()
-			.filter_map(|num| num.parse::<usize>().ok())
-			.collect::<HashSet<usize>>();
-		Ok(numbers)
 	}
 }
 
