@@ -1,3 +1,4 @@
+use rayon::prelude::*;
 use crate::solution::Solution;
 use crate::solution::solution::extract_numbers;
 
@@ -24,6 +25,24 @@ impl Day06 {
 			.collect::<Vec<TimeDistance>>();
 		Ok(tds)
 	}
+
+	fn merge_time_distances(
+		&self,
+		tds: Vec<TimeDistance>,
+	) -> Result<TimeDistance, String> {
+		let time = tds.iter()
+			.map(|td| td.time.to_string())
+			.collect::<String>()
+			.parse::<usize>()
+			.map_err(|_| format!("failed to merge time"))?;
+		let distance = tds.iter()
+			.map(|td| td.distance.to_string())
+			.collect::<String>()
+			.parse::<usize>()
+			.map_err(|_| format!("failed to merge distance"))?;
+
+		Ok(TimeDistance { time, distance })
+	}
 }
 
 impl Solution for Day06 {
@@ -32,17 +51,26 @@ impl Solution for Day06 {
 
 	fn part_one(&self) -> Result<String, String> {
 		let input = self.parse()?;
-		let result = input.iter()
+		let result = input.into_par_iter()
 			.map(|td| {
 				(1..td.time).filter_map(|time_held| {
 					let travel = (td.time - time_held) * time_held;
-					if travel > td.distance {
-						Some((time_held, travel))
-					} else {
-						None
-					}
+					(travel > td.distance).then(|| (time_held, travel))
 				}).count()
 			}).product::<usize>();
+		Ok(result.to_string())
+	}
+
+	fn part_two(&self) -> Result<String, String> {
+		let input = self.parse()?;
+		let td = self.merge_time_distances(input)?;
+
+		let result = (1..td.time).into_par_iter()
+			.filter_map(|time_held| {
+				let travel = (td.time - time_held) * time_held;
+				(travel > td.distance).then(|| (time_held, travel))
+			}).count();
+
 		Ok(result.to_string())
 	}
 }
