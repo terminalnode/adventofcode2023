@@ -41,14 +41,30 @@ struct Hand {
 	bid: usize,
 }
 
-fn cards_to_type(cards: &Vec<Card>) -> Result<HandType, String> {
+fn cards_to_type(
+	cards: &Vec<Card>,
+	with_joker: bool,
+) -> Result<HandType, String> {
 	let mut map = HashMap::<Card, usize>::new();
+	let mut jokers = 0;
 	cards.iter().for_each(|&card| {
-		*map.entry(card).or_insert(0) += 1;
+		if with_joker && card == Card::J {
+			jokers += 1;
+		} else {
+			*map.entry(card).or_insert(0) += 1;
+		}
 	});
 
-	let mut groupings = map.values().collect::<Vec<&usize>>();
+	let mut groupings = map.values().map(|&x| x).collect::<Vec<usize>>();
 	groupings.sort();
+
+	let size = groupings.len();
+	if size == 0 {
+		groupings.push(jokers);
+	} else {
+		groupings[size - 1] += jokers;
+	}
+	//groupings.sort();
 
 	match groupings.as_slice() {
 		[5] => Ok(FiveOfAKind),
@@ -58,12 +74,18 @@ fn cards_to_type(cards: &Vec<Card>) -> Result<HandType, String> {
 		[1, 2, 2] => Ok(TwoPair),
 		[1, 1, 1, 2] => Ok(OnePair),
 		[1, 1, 1, 1, 1] => Ok(HighCard),
-		_ => Err(format!("Invalid hand: {cards:?}")),
+		_ => {
+			println!("{cards:?} => {groupings:?}");
+			Err(format!("Invalid hand: {cards:?}"))
+		},
 	}
 }
 
 impl Day07 {
-	fn parse(&self) -> Result<Vec<Hand>, String> {
+	fn parse(
+		&self,
+		with_joker: bool,
+	) -> Result<Vec<Hand>, String> {
 		let hand = self.read_file_as_string()?.lines().filter_map(|line| {
 			let mut line_split = line.split(" ");
 			let cards = line_split.next()?.chars()
@@ -71,7 +93,7 @@ impl Day07 {
 				.collect::<Result<Vec<Card>, String>>()
 				.ok()?;
 			let bid = line_split.next()?.parse::<usize>().ok()?;
-			let hand_type = cards_to_type(&cards).ok()?;
+			let hand_type = cards_to_type(&cards, with_joker).ok()?;
 
 			Some(Hand { cards, hand_type, bid })
 		}).collect::<Vec<Hand>>();
@@ -84,7 +106,7 @@ impl Solution for Day07 {
 	fn get_file_name(&self) -> &str { &self.file }
 
 	fn part_one(&self) -> Result<String, String> {
-		let mut hands = self.parse()?;
+		let mut hands = self.parse(false)?;
 
 		hands.sort_by(|a, b| {
 			if a.hand_type > b.hand_type {
@@ -92,8 +114,34 @@ impl Solution for Day07 {
 			} else if a.hand_type < b.hand_type {
 				Ordering::Less
 			} else {
-				a.cards.iter().zip(&b.cards).filter_map(|(a, b)| {
+				a.cards.iter().zip(&b.cards).filter_map(|(&a, &b)| {
 					if a > b { Some(Ordering::Greater) }
+					else if a < b { Some(Ordering::Less) }
+					else {  None }
+				}).next().unwrap_or(Ordering::Equal)
+			}
+		});
+
+		let mut out = 0;
+		for (i, hand) in hands.iter().enumerate() {
+			out += hand.bid * (i + 1);
+		}
+		Ok(out.to_string())
+	}
+
+	fn part_two(&self) -> Result<String, String> {
+		let mut hands = self.parse(true)?;
+
+		hands.sort_by(|a, b| {
+			if a.hand_type > b.hand_type {
+				Ordering::Greater
+			} else if a.hand_type < b.hand_type {
+				Ordering::Less
+			} else {
+				a.cards.iter().zip(&b.cards).filter_map(|(&a, &b)| {
+					if a != b && a == Card::J { Some(Ordering::Less) }
+					else if a != b && b == Card::J { Some(Ordering::Greater) }
+					else if a > b { Some(Ordering::Greater) }
 					else if a < b { Some(Ordering::Less) }
 					else { None }
 				}).next().unwrap_or(Ordering::Equal)
