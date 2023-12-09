@@ -39,7 +39,7 @@ fn extrapolate_history(
 	}
 }
 
-fn add_predictions(
+fn add_future_predictions(
 	histories: &mut Vec<History>,
 ) {
 	for i in 0..histories.len() {
@@ -55,6 +55,26 @@ fn add_predictions(
 	}
 }
 
+fn add_historical_predictions(
+	histories: &mut Vec<History>,
+) {
+	let len = histories.len();
+
+	for i in 0..len {
+		if i == len - 1 {
+			continue
+		}
+
+		if i == 0 {
+			histories[i].push(0);
+		}
+
+		let this = histories[i][0];
+		let below = histories[i+1][0];
+		histories[i+1].insert(0, below - this);
+	}
+}
+
 impl Solution for Day09 {
 	fn new(file: &str) -> Self { Day09 { file: file.to_string() } }
 	fn get_file_name(&self) -> &str { &self.file }
@@ -63,9 +83,22 @@ impl Solution for Day09 {
 		let result = self.parse_input()?.iter()
 			.map(|history| {
 				let mut new_history = extrapolate_history(history.clone());
-				add_predictions(&mut new_history);
+				add_future_predictions(&mut new_history);
 				*new_history.last()
 					.map_or(None, |h| h.last())
+					.unwrap_or(&0)
+			}).sum::<ISand>();
+
+		Ok(result.to_string())
+	}
+
+	fn part_two(&self) -> Result<String, String> {
+		let result = self.parse_input()?.iter()
+			.map(|history| {
+				let mut new_history = extrapolate_history(history.clone());
+				add_historical_predictions(&mut new_history);
+				*new_history.last()
+					.map_or(None, |h| h.first())
 					.unwrap_or(&0)
 			}).sum::<ISand>();
 
