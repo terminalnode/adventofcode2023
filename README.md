@@ -1,4 +1,7 @@
 # 🦀 Advent of Code 2023 🦀
+ * ⭐ means solved
+ * 🥸 means solved, but not a very satisfying solution
+ * 💩 means solved, but...
 
 | Day | Solution | Day | Solution |
 |-----|----------|-----|----------|
@@ -11,7 +14,7 @@
 | 07  | ⭐ ⭐      | 20  |          |
 | 08  | ⭐ ⭐      | 21  |          |
 | 09  | ⭐ ⭐      | 22  |          |
-| 10  | ⭐        | 23  |          |
+| 10  | ⭐ 🥸     | 23  |          |
 | 11  |          | 24  |          |
 | 12  |          | 25  |          |
 | 13  |          |     |          |

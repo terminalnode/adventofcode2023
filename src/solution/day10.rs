@@ -177,10 +177,8 @@ impl Solution for Day10 {
 			.ok_or(format!("Could not find starting position"))?;
 		let mut direction = Direction::North;
 
-		println!("Start: {current:?}");
 		while !revisited.contains(&current) {
 			let curr_char = info2.get_char(Some(current)).unwrap();
-			println!("Coming from {direction:?} into {curr_char} at {current:?}");
 
 			let (new_side1, new_side2) = match curr_char {
 				'|' => match direction {
@@ -218,8 +216,6 @@ impl Solution for Day10 {
 			};
 			let filtered_new_side1 = new_side1.iter().filter_map(|x| *x);
 			let filtered_new_side2 = new_side2.iter().filter_map(|x| *x);
-			println!("New side 1: {filtered_new_side1:?}");
-			println!("New side 2: {filtered_new_side2:?}");
 			side1.extend(filtered_new_side1);
 			side2.extend(filtered_new_side2);
 
@@ -270,17 +266,62 @@ impl Solution for Day10 {
 		}
 
 		let s1: HashSet<Point2D> = side1.iter()
-			.filter(|&&x| info2.get_char(Some(x)) == Some('.') || !visited.contains(&x))
+			.filter(|&x| !visited.contains(x))
 			.map(|x| *x)
 			.collect();
-		println!("Side 1\n{s1:?}\n");
+		let s1e = extend(&info2, &visited, &s1);
 
 		let s2: HashSet<Point2D> = side2.iter()
-			.filter(|&&x| info2.get_char(Some(x)) == Some('.') || !visited.contains(&x))
+			.filter(|&x| !visited.contains(x))
 			.map(|x| *x)
 			.collect();
-		println!("Side 2\n{s2:?}");
+		let s2e = extend(&info2, &visited, &s2);
 
-		Ok(format!("One of these (probably the smaller): {} / {}", s1.len(), s2.len()))
+		Ok(format!("One of these (probably the smaller): {} / {}", s1e.len(), s2e.len()))
 	}
+}
+
+fn extend(
+	info: &MapInfo,
+	full_set: &HashSet<Point2D>,
+	other_set: &HashSet<Point2D>,
+) -> HashSet<Point2D> {
+	let mut visited = HashSet::<Point2D>::new();
+	let mut queue = VecDeque::<Point2D>::new();
+	for point in other_set {
+		visited.insert(*point);
+		queue.push_back(*point);
+	}
+
+	while let Some(point) = queue.pop_front() {
+		if let Some(north) = point.north() {
+			if !visited.contains(&north) && !full_set.contains(&north) && north.in_grid(info.max_x, info.max_y) {
+				visited.insert(north);
+				queue.push_back(north);
+			}
+		}
+
+		if let Some(south) = point.south() {
+			if !visited.contains(&south) && !full_set.contains(&south) && south.in_grid(info.max_x, info.max_y){
+				visited.insert(south);
+				queue.push_back(south);
+			}
+		}
+
+		if let Some(east) = point.east() {
+			if !visited.contains(&east) && !full_set.contains(&east) && east.in_grid(info.max_x, info.max_y){
+				visited.insert(east);
+				queue.push_back(east);
+			}
+		}
+
+		if let Some(west) = point.west() {
+			if !visited.contains(&west) && !full_set.contains(&west) && west.in_grid(info.max_x, info.max_y){
+				visited.insert(west);
+				queue.push_back(west);
+			}
+		}
+	}
+
+	visited
 }
