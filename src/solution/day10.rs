@@ -29,7 +29,6 @@ fn connect(
 ) {
 	if let Some(target) = target.filter(|p| p.in_grid(max_x, max_y)) {
 		map.entry(origin).or_insert(HashSet::new()).insert(target);
-		map.entry(target).or_insert(HashSet::new()).insert(origin);
 	}
 }
 
@@ -53,15 +52,33 @@ impl Day10 {
 					'J' => multi_connect(&mut map, here, here.north(), here.west(), max_x, max_y),
 					'7' => multi_connect(&mut map, here, here.south(), here.west(), max_x, max_y),
 					'F' => multi_connect(&mut map, here, here.south(), here.east(), max_x, max_y),
-					'S' => { option_start = Some(here) }
+					'S' => {
+						option_start = Some(here);
+						multi_connect(&mut map, here, here.south(), here.north(), max_x, max_y);
+						multi_connect(&mut map, here, here.east(), here.west(), max_x, max_y);
+					}
 					'.' => (/* ignore ground */),
 					c => println!("Unknown char: {c}"),
 				}
 			}
 		}
 
+		// Remove connections that are not bidirectional
+		// Very annoying to do in-place with Rust, and parsing is only done once #yolo
+		let mut filtered_map = HashMap::new();
+		for key in map.keys() {
+			let connections = map.get(key).unwrap();
+			let new_connections = connections.iter().copied().filter(|connection| {
+				match map.get(connection) {
+					Some(cs) => cs.contains(key),
+					None => false,
+				}
+			}).collect();
+			filtered_map.insert(*key, new_connections);
+		}
+
 		let start = option_start.ok_or(format!("Could not find starting position"))?;
-		Ok((start, map))
+		Ok((start, filtered_map))
 	}
 }
 
