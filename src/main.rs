@@ -4,6 +4,7 @@ use getopts::Options;
 use solution::*;
 
 mod solution;
+mod util;
 
 fn main() {
 	let args: Vec<String> = env::args().collect();
@@ -50,6 +51,7 @@ fn main() {
 		7 => Box::new(Day07::new(&file)),
 		8 => Box::new(Day08::new(&file)),
 		9 => Box::new(Day09::new(&file)),
+		10 => Box::new(Day10::new(&file)),
 		_ => Box::new(PlaceholderSolution::new(&file)),
 	};
 
