@@ -1,5 +1,4 @@
 use std::collections::{HashMap, HashSet, VecDeque};
-use std::thread::current;
 use crate::solution::Solution;
 use crate::util::{Point2D, Point2DExt};
 
@@ -171,10 +170,12 @@ impl Solution for Day10 {
 		let mut revisited = HashSet::new();
 		let mut side1 = HashSet::new();
 		let mut side2 = HashSet::new();
-		let mut direction = Direction::North;
+
+		// Direction we're AT now, and direction we went to get there
 		let mut current = visited.clone().into_iter()
 			.find(|(x, y)| info2.get_char(Some((*x, *y))) == Some('|'))
 			.ok_or(format!("Could not find starting position"))?;
+		let mut direction = Direction::North;
 
 		println!("Start: {current:?}");
 		while !revisited.contains(&current) {
@@ -193,18 +194,18 @@ impl Solution for Day10 {
 					x => return Err(format!("impossible - ({x:?})")),
 				}
 				'F' => match direction {
-					Direction::West => (vec![current.west(), current.north()], vec![]),
-					Direction::North => (vec![], vec![current.west(), current.north()]),
+					Direction::West => (vec![], vec![current.west(), current.north()]),
+					Direction::North => (vec![current.west(), current.north()], vec![]),
 					x => return Err(format!("impossible F ({x:?})")),
 				}
 				'J' => match direction {
-					Direction::South => (vec![], vec![current.east(), current.south()]),
-					Direction::East => (vec![current.east(), current.south()], vec![]),
+					Direction::South => (vec![current.east(), current.south()], vec![]),
+					Direction::East => (vec![], vec![current.east(), current.south()]),
 					x => return Err(format!("impossible J ({x:?})")),
 				}
 				'L' => match direction {
-					Direction::South => (vec![current.south(), current.west()], vec![]),
-					Direction::West => (vec![], vec![current.south(), current.west()]),
+					Direction::South => (vec![], vec![current.south(), current.west()]),
+					Direction::West => (vec![current.south(), current.west()], vec![]),
 					x => return Err(format!("impossible L ({x:?})")),
 				}
 				'7' => match direction {
@@ -215,14 +216,18 @@ impl Solution for Day10 {
 				'S' => (vec![], vec![]),
 				c => return Err(format!("impossible current pos ({c})")),
 			};
-			side1.extend(new_side1.iter().filter_map(|x| *x));
-			side2.extend(new_side2.iter().filter_map(|x| *x));
+			let filtered_new_side1 = new_side1.iter().filter_map(|x| *x);
+			let filtered_new_side2 = new_side2.iter().filter_map(|x| *x);
+			println!("New side 1: {filtered_new_side1:?}");
+			println!("New side 2: {filtered_new_side2:?}");
+			side1.extend(filtered_new_side1);
+			side2.extend(filtered_new_side2);
 
 			direction = match curr_char {
 				// TODO infer S, until then... manually edit how S is handled
 				'S' => match direction {
-					Direction::West => Direction::South,
-					Direction::North => Direction::East,
+					Direction::East => Direction::South,
+					Direction::North => Direction::West,
 					x => return Err(format!("Can not go into S from {x:?} at {current:?}")),
 				}
 
@@ -263,13 +268,19 @@ impl Solution for Day10 {
 				Direction::West => current.west(),
 			}.unwrap();
 		}
-		let s1: usize = side1.iter()
-			.filter(|&&x| info2.get_char(Some(x)) == Some('.'))
-			.count();
-		let s2: usize = side2.iter()
-			.filter(|&&x| info2.get_char(Some(x)) == Some('.'))
-			.count();
 
-		Ok(format!("One of these (probably the smaller): {} / {}", s1, s2))
+		let s1: HashSet<Point2D> = side1.iter()
+			.filter(|&&x| info2.get_char(Some(x)) == Some('.') || !visited.contains(&x))
+			.map(|x| *x)
+			.collect();
+		println!("Side 1\n{s1:?}\n");
+
+		let s2: HashSet<Point2D> = side2.iter()
+			.filter(|&&x| info2.get_char(Some(x)) == Some('.') || !visited.contains(&x))
+			.map(|x| *x)
+			.collect();
+		println!("Side 2\n{s2:?}");
+
+		Ok(format!("One of these (probably the smaller): {} / {}", s1.len(), s2.len()))
 	}
 }
