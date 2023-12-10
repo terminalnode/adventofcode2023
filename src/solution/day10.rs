@@ -1,4 +1,5 @@
 use std::collections::{HashMap, HashSet, VecDeque};
+use std::thread::current;
 use crate::solution::Solution;
 use crate::util::{Point2D, Point2DExt};
 
@@ -177,122 +178,98 @@ impl Solution for Day10 {
 
 		println!("Start: {current:?}");
 		while !revisited.contains(&current) {
-			println!("Direction: {direction:?}");
+			let curr_char = info2.get_char(Some(current)).unwrap();
+			println!("Coming from {direction:?} into {curr_char} at {current:?}");
+
+			let (new_side1, new_side2) = match curr_char {
+				'|' => match direction {
+					Direction::North => (vec![current.west()], vec![current.east()]),
+					Direction::South => (vec![current.east()], vec![current.west()]),
+					x => return Err(format!("impossible | ({x:?})")),
+				}
+				'-' => match direction {
+					Direction::East => (vec![current.north()], vec![current.south()]),
+					Direction::West => (vec![current.south()], vec![current.north()]),
+					x => return Err(format!("impossible - ({x:?})")),
+				}
+				'F' => match direction {
+					Direction::West => (vec![current.west(), current.north()], vec![]),
+					Direction::North => (vec![], vec![current.west(), current.north()]),
+					x => return Err(format!("impossible F ({x:?})")),
+				}
+				'J' => match direction {
+					Direction::South => (vec![], vec![current.east(), current.south()]),
+					Direction::East => (vec![current.east(), current.south()], vec![]),
+					x => return Err(format!("impossible J ({x:?})")),
+				}
+				'L' => match direction {
+					Direction::South => (vec![current.south(), current.west()], vec![]),
+					Direction::West => (vec![], vec![current.south(), current.west()]),
+					x => return Err(format!("impossible L ({x:?})")),
+				}
+				'7' => match direction {
+					Direction::North => (vec![], vec![current.north(), current.east()]),
+					Direction::East => (vec![current.north(), current.east()], vec![]),
+					x => return Err(format!("impossible 7 ({x:?})")),
+				}
+				'S' => (vec![], vec![]),
+				c => return Err(format!("impossible current pos ({c})")),
+			};
+			side1.extend(new_side1.iter().filter_map(|x| *x));
+			side2.extend(new_side2.iter().filter_map(|x| *x));
+
+			direction = match curr_char {
+				// TODO infer S, until then... manually edit how S is handled
+				'S' => match direction {
+					Direction::West => Direction::South,
+					Direction::North => Direction::East,
+					x => return Err(format!("Can not go into S from {x:?} at {current:?}")),
+				}
+
+				'J' => match direction {
+					Direction::South => Direction::West,
+					Direction::East => Direction::North,
+					x => return Err(format!("Can not go into J from {x:?} at {current:?}")),
+				}
+
+				'F' => match direction {
+					Direction::North => Direction::East,
+					Direction::West => Direction::South,
+					x => return Err(format!("Can not go into F from {x:?} at {current:?}")),
+				}
+
+				'L' => match direction {
+					Direction::South => Direction::East,
+					Direction::West => Direction::North,
+					x => return Err(format!("Can not go into L from {x:?} at {current:?}")),
+				}
+
+				'7' =>
+					match direction {
+						Direction::North => Direction::West,
+						Direction::East => Direction::South,
+						x => return Err(format!("Can not go into 7 from {x:?} at {current:?}")),
+					}
+
+				'-' | '|' => direction,
+				x => return Err(format!("Went {direction:?}, hit {x} and died")),
+			};
+
 			revisited.insert(current);
-
-			if direction == Direction::North {
-				if let Some(west) = current.west() {
-					if info2.get_char(Some(west)) == Some('.') {
-						side1.insert(west);
-					}
-				}
-
-				if let Some(east) = current.east() {
-					if info2.get_char(Some(east)) == Some('.') {
-						side2.insert(east);
-					}
-				}
-
-				let next = current.north().unwrap();
-				match info2.get_char(Some(next)) {
-					Some('7') => {
-						current = next.west().unwrap();
-						direction = Direction::West;
-					}
-					Some('F') => {
-						current = next.east().unwrap();
-						direction = Direction::East;
-					}
-					Some('S') => { // todo temp solution, adjust to your needs and it's 50/50
-						current = next.east().unwrap();
-						direction = Direction::East;
-					}
-					Some('|') => current = next,
-					Some(_) | None => return Err(format!("Went north and died")),
-				};
-			} else if direction == Direction::South {
-				if let Some(west) = current.west() {
-					if info2.get_char(Some(west)) == Some('.') {
-						side2.insert(west);
-					}
-				}
-
-				if let Some(east) = current.east() {
-					if info2.get_char(Some(east)) == Some('.') {
-						side1.insert(east);
-					}
-				}
-
-				let next = current.south().unwrap();
-				match info2.get_char(Some(next)) {
-					Some('L') => {
-						current = next.east().unwrap();
-						direction = Direction::East;
-					}
-					Some('J') => {
-						current = next.west().unwrap();
-						direction = Direction::West;
-					}
-					Some('|') => current = next,
-					Some(_) | None => return Err(format!("Went south and died")),
-				};
-			} else if direction == Direction::East {
-				if let Some(north) = current.north() {
-					if info2.get_char(Some(north)) == Some('.') {
-						side1.insert(north);
-					}
-				}
-
-				if let Some(south) = current.south() {
-					if info2.get_char(Some(south)) == Some('.') {
-						side2.insert(south);
-					}
-				}
-
-				let next = current.east().unwrap();
-				match info2.get_char(Some(next)) {
-					Some('7') => {
-						current = next.south().unwrap();
-						direction = Direction::South;
-					}
-					Some('J') => {
-						current = next.north().unwrap();
-						direction = Direction::North;
-					}
-					Some('-') => current = next,
-					Some(x) => return Err(format!("Went east and died: {x}")),
-					None => return Err(format!("Went east and died")),
-				};
-			} else if direction == Direction::West {
-				if let Some(north) = current.north() {
-					if info2.get_char(Some(north)) == Some('.') {
-						side2.insert(north);
-					}
-				}
-
-				if let Some(south) = current.south() {
-					if info2.get_char(Some(south)) == Some('.') {
-						side1.insert(south);
-					}
-				}
-
-				let next = current.west().unwrap();
-				match info2.get_char(Some(next)) {
-					Some('L') => {
-						current = next.north().unwrap();
-						direction = Direction::North;
-					}
-					Some('F') => {
-						current = next.south().unwrap();
-						direction = Direction::South;
-					}
-					Some('-') => current = next,
-					Some(x) => return Err(format!("Went west and died: {x}")),
-					None => return Err(format!("Went west and died")),
-				};
-			}
+			current = match direction {
+				Direction::North => current.north(),
+				Direction::South => current.south(),
+				Direction::East => current.east(),
+				Direction::West => current.west(),
+			}.unwrap();
 		}
+		let s1: usize = side1.iter()
+			.filter(|&&x| info2.get_char(Some(x)) == Some('.'))
+			.count();
+		let s2: usize = side2.iter()
+			.filter(|&&x| info2.get_char(Some(x)) == Some('.'))
+			.count();
 
-		Ok(format!("One of these (probably the smaller): {} / {}", side1.len(), side2.len()))
+		Ok(format!("One of these (probably the smaller): {} / {}", s1, s2))
 	}
 }
