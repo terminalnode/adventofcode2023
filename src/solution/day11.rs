@@ -1,4 +1,4 @@
-use std::collections::{HashSet, VecDeque};
+use std::collections::VecDeque;
 use crate::solution::Solution;
 use crate::util::{Point2D, Point2DExt};
 
@@ -17,13 +17,16 @@ impl Day11 {
 		Ok(map)
 	}
 
-	fn parse_galaxies(&self) -> Result<GalaxyList, String> {
+	fn parse_galaxies(
+		&self,
+		expansion: usize,
+	) -> Result<GalaxyList, String> {
 		let star_map = self.parse()?;
 		let mut galaxies: GalaxyList = Vec::new();
 		let y_len = star_map.len();
 		let x_len = star_map[0].len();
 
-		let mut empty_x = Vec::<usize>::new();
+		let mut empty_y = Vec::<usize>::new();
 		for y in 0..y_len {
 			let mut found = false;
 			for x in 0..x_len {
@@ -33,7 +36,7 @@ impl Day11 {
 				}
 			}
 
-			if !found { empty_x.push(y); }
+			if !found { empty_y.push(y); }
 		}
 
 		let mut found: bool;
@@ -42,17 +45,36 @@ impl Day11 {
 			found = false;
 
 			for y in 0..star_map.len() {
-				let ypansion = empty_x.iter().filter(|other| other < &&y).count();
+				let ypansion = empty_y.iter()
+					.filter(|other| other < &&y)
+					.count() * expansion;
+
 				if star_map[y][x] == '#' {
 					found = true;
 					galaxies.push((x + xpansion, y + ypansion));
 				}
 			}
 
-			if !found { xpansion += 1; }
+			if !found { xpansion += expansion; }
 		}
 
 		Ok(galaxies)
+	}
+
+	fn solve(
+		&self,
+		expansion: usize,
+	) -> Result<String, String> {
+		let mut galaxies = VecDeque::from(self.parse_galaxies(expansion)?);
+
+		let mut distances = 0usize;
+		while let Some(galaxy) = galaxies.pop_front() {
+			galaxies.iter().for_each(|other| {
+				distances += manhattan_distance(galaxy, *other);
+			});
+		};
+
+		Ok(distances.to_string())
 	}
 }
 
@@ -70,17 +92,10 @@ impl Solution for Day11 {
 	fn get_file_name(&self) -> &str { &self.file }
 
 	fn part_one(&self) -> Result<String, String> {
-		let mut galaxies = VecDeque::from(self.parse_galaxies()?);
+		self.solve(1)
+	}
 
-		let mut pairs = 0usize;
-		let mut distances = 0usize;
-		while let Some(galaxy) = galaxies.pop_front() {
-			galaxies.iter().for_each(|other| {
-				pairs += 1;
-				distances += manhattan_distance(galaxy, *other);
-			});
-		};
-
-		Ok(distances.to_string())
+	fn part_two(&self) -> Result<String, String> {
+		self.solve(1_000_000)
 	}
 }
