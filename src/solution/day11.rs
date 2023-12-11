@@ -23,7 +23,7 @@ impl Day11 {
 		let y_len = star_map.len();
 		let x_len = star_map[0].len();
 
-		let mut empty_y = Vec::<usize>::new();
+		let mut empty_x = Vec::<usize>::new();
 		for y in 0..y_len {
 			let mut found = false;
 			for x in 0..x_len {
@@ -32,34 +32,24 @@ impl Day11 {
 					break;
 				}
 			}
-			if !found {
-				println!("Triggered ypansion on y={y}");
-				empty_y.push(y + empty_y.len());
-			}
+
+			if !found { empty_x.push(y); }
 		}
-		println!("---");
 
 		let mut found: bool;
 		let mut xpansion: usize = 0;
-		let mut ypansion: usize;
 		for x in 0..x_len {
 			found = false;
-			ypansion = 0;
 
 			for y in 0..star_map.len() {
-				if empty_y.contains(&y) { ypansion += 1; }
-
+				let ypansion = empty_x.iter().filter(|other| other < &&y).count();
 				if star_map[y][x] == '#' {
 					found = true;
-					println!("Found galaxy at ({}, {})", x + xpansion, y + ypansion);
 					galaxies.push((x + xpansion, y + ypansion));
 				}
 			}
 
-			if !found {
-				println!("Triggered xpansion on x={x} ({})", x+xpansion);
-				xpansion += 1;
-			}
+			if !found { xpansion += 1; }
 		}
 
 		Ok(galaxies)
@@ -91,6 +81,6 @@ impl Solution for Day11 {
 			});
 		};
 
-		Err(distances.to_string())
+		Ok(distances.to_string())
 	}
 }
