@@ -39,9 +39,10 @@ impl Day11 {
 			if !found { empty_y.push(y); }
 		}
 
-		let mut found: bool;
+		let mut found: bool = true;
 		let mut xpansion: usize = 0;
 		for x in 0..x_len {
+			if !found { xpansion += expansion; }
 			found = false;
 
 			for y in 0..star_map.len() {
@@ -54,8 +55,6 @@ impl Day11 {
 					galaxies.push((x + xpansion, y + ypansion));
 				}
 			}
-
-			if !found { xpansion += expansion; }
 		}
 
 		Ok(galaxies)
@@ -96,6 +95,9 @@ impl Solution for Day11 {
 	}
 
 	fn part_two(&self) -> Result<String, String> {
-		self.solve(1_000_000)
+		// Don't understand why, but for distance of 1 you input 1.
+		// For higher distances, you subtract one from the distance.
+		// This goes for the example data with distance of 10 as well (10 too high, 9 correct).
+		self.solve(999_999)
 	}
 }
