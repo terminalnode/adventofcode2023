@@ -1,5 +1,8 @@
 use std::collections::VecDeque;
+use std::sync::atomic::{AtomicUsize, Ordering};
+
 use rayon::prelude::*;
+
 use crate::solution::Solution;
 
 pub struct Day12 {
@@ -14,7 +17,8 @@ impl Day12 {
 		let file = self.read_file_as_string()?;
 		let lines = file.lines().collect::<Vec<&str>>();
 
-		let count = lines.par_iter().enumerate().filter_map(|(i, line)| {
+		let done_count = AtomicUsize::new(0);
+		let count = lines.par_iter().filter_map(|line| {
 			let mut split = line.split(" ");
 			let pre_springs: Vec<char> = split.next()?.chars().collect();
 			let springs: Vec<char> = (0..copies)
@@ -30,9 +34,11 @@ impl Day12 {
 				.collect::<Vec<usize>>();
 
 			let x = Some(count(&springs, &groups.repeat(copies)));
-			println!("Finished {i}");
+			let done = done_count.fetch_add(1, Ordering::Relaxed);
+			println!("\x1B[2K\x1B[1GDone: {done}\x1B[1A");
 			x
 		}).sum::<usize>();
+		println!();
 
 		Ok(count)
 	}
@@ -45,13 +51,12 @@ fn count(
 	let mut ok_count: usize = 0;
 	let mut progresses: VecDeque<(usize, RecordProgress)> = VecDeque::from(vec![
 		(0, RecordProgress {
-			springs: Vec::new(),
 			broke_in_group: 0,
 			group_index: 0,
 		}),
 	]);
 
-	while let Some((mut pos, mut rp)) = progresses.pop_front() {
+	while let Some((mut pos, mut rp)) = progresses.pop_back() {
 		loop {
 			if pos == springs.len() {
 				if rp.group_index == groups.len() { ok_count += 1; }
@@ -62,14 +67,14 @@ fn count(
 				Some('.') => rp.move_dot(groups),
 				Some('#') => rp.move_hash(groups),
 				Some('?') => {
-					// Add # to queue
+					// Add . to queue
 					let mut dot_clone = rp.clone();
-					if dot_clone.move_hash(groups) {
+					if dot_clone.move_dot(groups) {
 						progresses.push_back((pos + 1, dot_clone));
 					}
 
-					// Then walk down .
-					rp.move_dot(groups)
+					// Then walk down #
+					rp.move_hash(groups)
 				}
 
 				None => panic!("We got None! How?"),
@@ -86,25 +91,15 @@ fn count(
 
 #[derive(Debug, Clone)]
 struct RecordProgress {
-	springs: Vec<char>,
 	broke_in_group: usize,
 	group_index: usize,
 }
 
 impl RecordProgress {
-	fn pretty_print(&self, groups: &Vec<usize>) -> String {
-		format!("{} [{:?}], group {}, current {}", self.springs.iter().collect::<String>(), groups, self.group_index, self.broke_in_group)
-	}
-
-	fn break_print(&self, groups: &Vec<usize>) {
-		println!("Breaking: {} [{:?}], group {}, current {}", self.springs.iter().collect::<String>(), groups, self.group_index, self.broke_in_group);
-	}
-
 	fn move_dot(
 		&mut self,
 		groups: &Vec<usize>,
 	) -> bool {
-		self.springs.push('.');
 		if self.broke_in_group > 0 {
 			if self.group_index > 0 && Some(&self.broke_in_group) != groups.get(self.group_index - 1) {
 				return false;
@@ -119,7 +114,6 @@ impl RecordProgress {
 		&mut self,
 		groups: &Vec<usize>,
 	) -> bool {
-		self.springs.push('#');
 		self.broke_in_group += 1;
 
 		// New group?
@@ -145,6 +139,8 @@ impl Solution for Day12 {
 	}
 
 	fn part_two(&self) -> Result<String, String> {
+		// It works and isn't super memory hungry, but you need a pretty beefy CPU
+		// to run it in a... still pretty unreasonable time.
 		Ok(self.solve(5)?.to_string())
 	}
 }
