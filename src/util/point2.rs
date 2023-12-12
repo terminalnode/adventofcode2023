@@ -20,6 +20,15 @@ pub trait Point2DExt {
 		}
 	}
 
+	fn manhattan_distance(
+		&self,
+		end: Point2D,
+	) -> usize {
+		let x_diff = self.x().abs_diff(end.x());
+		let y_diff = self.y().abs_diff(end.y());
+		x_diff + y_diff
+	}
+
 	fn south(&self) -> Option<Point2D> { Some((self.x(), self.y() + 1)) }
 	fn east(&self) -> Option<Point2D> { Some((self.x() + 1, self.y())) }
 

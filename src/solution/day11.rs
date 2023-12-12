@@ -69,21 +69,12 @@ impl Day11 {
 		let mut distances = 0usize;
 		while let Some(galaxy) = galaxies.pop_front() {
 			galaxies.iter().for_each(|other| {
-				distances += manhattan_distance(galaxy, *other);
+				distances += galaxy.manhattan_distance(*other);
 			});
 		};
 
 		Ok(distances.to_string())
 	}
-}
-
-fn manhattan_distance(
-	start: Point2D,
-	end: Point2D,
-) -> usize {
-	let x_diff = start.x().abs_diff(end.x());
-	let y_diff = start.y().abs_diff(end.y());
-	x_diff + y_diff
 }
 
 impl Solution for Day11 {
