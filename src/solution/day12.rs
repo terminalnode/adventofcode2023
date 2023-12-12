@@ -51,6 +51,7 @@ fn count(
 	let mut ok_count: usize = 0;
 	let mut progresses: VecDeque<(usize, RecordProgress)> = VecDeque::from(vec![
 		(0, RecordProgress {
+			new_group: true,
 			broke_in_group: 0,
 			group_index: 0,
 		}),
@@ -59,7 +60,9 @@ fn count(
 	while let Some((mut pos, mut rp)) = progresses.pop_back() {
 		loop {
 			if pos == springs.len() {
-				if rp.group_index == groups.len() { ok_count += 1; }
+				if rp.group_index == groups.len() && Some(&rp.broke_in_group) == groups.last() {
+					ok_count += 1;
+				}
 				break;
 			}
 
@@ -93,6 +96,7 @@ fn count(
 struct RecordProgress {
 	broke_in_group: usize,
 	group_index: usize,
+	new_group: bool,
 }
 
 impl RecordProgress {
@@ -101,11 +105,10 @@ impl RecordProgress {
 		groups: &Vec<usize>,
 	) -> bool {
 		if self.broke_in_group > 0 {
+			self.new_group = true;
 			if self.group_index > 0 && Some(&self.broke_in_group) != groups.get(self.group_index - 1) {
 				return false;
 			}
-
-			self.broke_in_group = 0;
 		}
 		true
 	}
@@ -117,8 +120,10 @@ impl RecordProgress {
 		self.broke_in_group += 1;
 
 		// New group?
-		if self.broke_in_group == 1 {
+		if self.new_group {
 			self.group_index += 1;
+			self.broke_in_group = 1;
+			self.new_group = false;
 		}
 
 		// Group too big?
