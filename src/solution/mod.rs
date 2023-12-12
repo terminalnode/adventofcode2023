@@ -10,6 +10,7 @@ mod day08;
 mod day09;
 mod day10;
 mod day11;
+mod day12;
 
 pub use solution::Solution;
 pub use solution::PlaceholderSolution;
@@ -24,3 +25,4 @@ pub use day08::Day08;
 pub use day09::Day09;
 pub use day10::Day10;
 pub use day11::Day11;
+pub use day12::Day12;
