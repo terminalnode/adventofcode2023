@@ -6,188 +6,134 @@ pub struct Day12 {
 	file: String,
 }
 
-#[derive(Debug, Clone)]
-struct Record {
-	springs: Vec<char>,
-	groups: Vec<usize>,
-}
-
-#[derive(Debug)]
-struct RecordProgress {
-	record: Record,
-	broke_in_group: usize,
-	group_index: usize,
-}
-
 impl Day12 {
-	fn parse(
+	fn solve(
 		&self,
 		copies: usize,
-	) -> Result<Vec<Record>, String> {
+	) -> Result<usize, String> {
 		let file = self.read_file_as_string()?;
 		let lines = file.lines().collect::<Vec<&str>>();
 
-		let records = lines.par_iter().enumerate().filter_map(|(i, line)| {
+		let count = lines.par_iter().enumerate().filter_map(|(i, line)| {
 			let mut split = line.split(" ");
-			let springs: Vec<char> = split.next()?.chars().collect();
+			let pre_springs: Vec<char> = split.next()?.chars().collect();
+			let springs: Vec<char> = (0..copies)
+				.flat_map(|i| {
+					let mut result = pre_springs.clone();
+					if i < copies - 1 { result.push('?'); }
+					result
+				}).collect();
 
 			let group_split = split.next()?;
 			let groups: Vec<usize> = group_split.split(",")
 				.map(|s| s.parse::<usize>().unwrap())
 				.collect::<Vec<usize>>();
 
-			let x = Some(expand(&springs.repeat(copies), &groups.repeat(copies)));
+			let x = Some(count(&springs, &groups.repeat(copies)));
 			println!("Finished {i}");
 			x
-		}).flatten().collect::<Vec<Record>>();
+		}).sum::<usize>();
 
-		println!("Finished parsing");
-		Ok(records)
+		Ok(count)
 	}
 }
 
-fn as_readable(rp: &RecordProgress) -> String {
-	rp.record.springs.iter().collect::<String>()
-}
-
-fn expand(
+fn count(
 	springs: &Vec<char>,
 	groups: &Vec<usize>,
-) -> Vec<Record> {
-	let readable = springs.iter().collect::<String>();
-	let group_count = groups.len();
-	let mut progresses: Vec<RecordProgress> = vec![
-		RecordProgress {
-			record: Record {
-				springs: vec![],
-				groups: groups.clone(),
-			},
+) -> usize {
+	let mut ok_count: usize = 0;
+	let mut progresses: VecDeque<(usize, RecordProgress)> = VecDeque::from(vec![
+		(0, RecordProgress {
+			springs: Vec::new(),
 			broke_in_group: 0,
 			group_index: 0,
-		},
-	];
+		}),
+	]);
 
-	for (i, char) in springs.iter().enumerate() {
-		progresses = match char {
-			'?' => {
-				progresses.iter().flat_map(|p| {
-					let next_group_count = groups.get(p.group_index);
-					let mut new: Vec<RecordProgress> = vec![];
-
-					if next_group_count != None && next_group_count > Some(&p.broke_in_group) {
-						let mut record = p.record.clone();
-						record.springs.push('#');
-						new.push(RecordProgress {
-							record,
-							broke_in_group: p.broke_in_group + 1,
-							group_index: p.group_index,
-						});
-					}
-
-					// If not in a group, or group has right size, add dot
-					if p.broke_in_group == 0 || next_group_count == Some(&p.broke_in_group) {
-						let mut record = p.record.clone();
-						record.springs.push('.');
-						new.push(RecordProgress {
-							record,
-							broke_in_group: 0,
-							group_index: if p.broke_in_group > 0 { p.group_index + 1 } else { p.group_index },
-						});
-					}
-
-					new
-				}).collect()
+	while let Some((mut pos, mut rp)) = progresses.pop_front() {
+		loop {
+			if pos == springs.len() {
+				if rp.group_index == groups.len() { ok_count += 1; }
+				break;
 			}
 
-			'.' => {
-				progresses.retain_mut(|p| {
-					let next_group_count = groups.get(p.group_index);
-					if p.broke_in_group != 0 && next_group_count == None {
-						return false;
-					} else if p.broke_in_group != 0 && Some(&p.broke_in_group) != next_group_count {
-						return false;
-					}
-					p.record.springs.push('.');
-
-					if p.broke_in_group != 0 {
-						p.broke_in_group = 0;
-						p.group_index += 1;
+			let should_continue = match springs.get(pos) {
+				Some('.') => rp.move_dot(groups),
+				Some('#') => rp.move_hash(groups),
+				Some('?') => {
+					// Add # to queue
+					let mut dot_clone = rp.clone();
+					if dot_clone.move_hash(groups) {
+						progresses.push_back((pos + 1, dot_clone));
 					}
 
-					true
-				});
-				progresses
-			}
+					// Then walk down .
+					rp.move_dot(groups)
+				}
 
-			'#' => {
-				progresses.retain_mut(|p| {
-					let next_group_count = groups.get(p.group_index);
-					p.broke_in_group += 1;
+				None => panic!("We got None! How?"),
+				Some(x) => panic!("Illegal char in springs: '{}'", x),
+			};
 
-					if p.broke_in_group == 0 && next_group_count == None {
-						return false;
-					} else if Some(&p.broke_in_group) > next_group_count {
-						return false;
-					}
-					p.record.springs.push('#');
+			pos += 1;
+			if !should_continue { break; }
+		}
+	};
 
-					true
-				});
-				progresses
-			}
-
-			c => panic!("Unknown char '{c}' in {springs:?}")
-		};
-	}
-
-	progresses.retain(|rp| {
-		validate(&rp.record, true)
-	});
-
-	progresses.iter().map(|rp| rp.record.clone()).collect()
+	ok_count
 }
 
-fn validate(record: &Record, is_final: bool) -> bool {
-	let mut groups = VecDeque::from(record.groups.clone());
-	let mut current: usize = 0;
-	let mut next = groups.pop_front();
+#[derive(Debug, Clone)]
+struct RecordProgress {
+	springs: Vec<char>,
+	broke_in_group: usize,
+	group_index: usize,
+}
 
-	for (i, c) in record.springs.iter().enumerate() {
-		match c {
-			'.' => {
-				if is_final && current != 0 && next != Some(current) {
-					return false;
-				} else if current != 0 {
-					next = groups.pop_front();
-				}
-				current = 0;
-			}
-
-			'#' => {
-				if current == 0 && next == None {
-					return false;
-				} else if next <= Some(current) {
-					return false;
-				} else {
-					current += 1;
-				}
-			}
-
-			x => panic!("Illegal char in record: '{}'", x),
-		};
+impl RecordProgress {
+	fn pretty_print(&self, groups: &Vec<usize>) -> String {
+		format!("{} [{:?}], group {}, current {}", self.springs.iter().collect::<String>(), groups, self.group_index, self.broke_in_group)
 	}
 
-	return if !is_final {
+	fn break_print(&self, groups: &Vec<usize>) {
+		println!("Breaking: {} [{:?}], group {}, current {}", self.springs.iter().collect::<String>(), groups, self.group_index, self.broke_in_group);
+	}
+
+	fn move_dot(
+		&mut self,
+		groups: &Vec<usize>,
+	) -> bool {
+		self.springs.push('.');
+		if self.broke_in_group > 0 {
+			if self.group_index > 0 && Some(&self.broke_in_group) != groups.get(self.group_index - 1) {
+				return false;
+			}
+
+			self.broke_in_group = 0;
+		}
 		true
-	} else if current != 0 && Some(current) != next {
-		false
-	} else if next > Some(current) {
-		false
-	} else if !groups.is_empty() {
-		false
-	} else {
+	}
+
+	fn move_hash(
+		&mut self,
+		groups: &Vec<usize>,
+	) -> bool {
+		self.springs.push('#');
+		self.broke_in_group += 1;
+
+		// New group?
+		if self.broke_in_group == 1 {
+			self.group_index += 1;
+		}
+
+		// Group too big?
+		if Some(&self.broke_in_group) > groups.get(self.group_index - 1) {
+			return false;
+		}
+
 		true
-	};
+	}
 }
 
 impl Solution for Day12 {
@@ -195,16 +141,10 @@ impl Solution for Day12 {
 	fn get_file_name(&self) -> &str { &self.file }
 
 	fn part_one(&self) -> Result<String, String> {
-		Ok(self.parse(1)?
-			.par_iter()
-			.count()
-			.to_string())
+		Ok(self.solve(1)?.to_string())
 	}
 
 	fn part_two(&self) -> Result<String, String> {
-		Ok(self.parse(5)?
-			.par_iter()
-			.count()
-			.to_string())
+		Ok(self.solve(5)?.to_string())
 	}
 }
