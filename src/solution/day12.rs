@@ -106,7 +106,7 @@ impl RecordProgress {
 	) -> bool {
 		if self.broke_in_group > 0 {
 			self.new_group = true;
-			if self.group_index > 0 && Some(&self.broke_in_group) != groups.get(self.group_index - 1) {
+			if Some(&self.broke_in_group) != groups.get(self.group_index - 1) {
 				return false;
 			}
 		}
@@ -124,10 +124,8 @@ impl RecordProgress {
 			self.group_index += 1;
 			self.broke_in_group = 1;
 			self.new_group = false;
-		}
-
-		// Group too big?
-		if Some(&self.broke_in_group) > groups.get(self.group_index - 1) {
+		} else if Some(&self.broke_in_group) > groups.get(self.group_index - 1) {
+			// Group too big?
 			return false;
 		}
 
