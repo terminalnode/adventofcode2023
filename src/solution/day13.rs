@@ -1,4 +1,5 @@
 use std::cmp::min;
+use rayon::max_num_threads;
 
 use crate::solution::Solution;
 
@@ -38,24 +39,49 @@ impl Day13 {
 	}
 }
 
-fn find_reflection_line(lines: &Vec<String>) -> Option<usize> {
+fn find_reflection_line(
+	lines: &Vec<String>,
+	max_diffs: usize,
+) -> Option<usize> {
 	for i1 in 0..(lines.len() - 1) {
-		if lines.get(i1) == lines.get(i1+1) {
+		let l1 = if let Some(v) = lines.get(i1) { v } else { continue };
+		let l2 = if let Some(v) = lines.get(i1 + 1) { v } else { continue };
+		let mut diffs = zero_or_one_diff(l1, l2);
+
+		if diffs <= max_diffs {
 			let remaining = lines.len() - i1 - 1;
 			let reflecting = min(i1+1, remaining);
 
 			let mut success = true;
 			for i2 in 1..reflecting {
-				if lines.get(i1 - i2) != lines.get(i1 + i2 + 1) {
+				let ll1 = if let Some(v) = lines.get(i1 - i2) { v } else { break };
+				let ll2 = if let Some(v) = lines.get(i1 + i2 + 1) { v } else { break };
+				diffs += zero_or_one_diff(ll1, ll2);
+
+				if diffs > max_diffs {
 					success = false;
 					break;
 				}
 			}
+
 			if success { return Some(i1); }
 		}
 	}
 
 	None
+}
+
+fn zero_or_one_diff(
+	line1: &String,
+	line2: &String,
+) -> usize {
+	for i in 0..line1.len() {
+		if line1.chars().nth(i) != line2.chars().nth(i) {
+			return 1;
+		}
+	}
+
+	0
 }
 
 impl Solution for Day13 {
@@ -68,15 +94,26 @@ impl Solution for Day13 {
 		let mut left: usize = 0;
 		let mut above: usize = 0;
 		for pattern in &patterns {
-			if let Some(row) = find_reflection_line(&pattern.rows) {
-				above += row + 1
+			if let Some(row) = find_reflection_line(&pattern.rows, 0) {
+				above += row + 1;
+				continue;
 			};
 
-			if let Some(col) = find_reflection_line(&pattern.columns) {
-				left += col + 1
+			if let Some(col) = find_reflection_line(&pattern.columns, 0) {
+				left += col + 1;
 			};
 		}
 
 		Ok(format!("{above} * 100 + {left} = {}", above * 100 + left))
+	}
+
+	fn part_two(&self) -> Result<String, String> {
+		let patterns = self.parse()?;
+
+		let s1 = "abc".to_string();
+		let s2 = "abc".to_string();
+		let diffs = zero_or_one_diff(&s1, &s2);
+		println!("diffs: {}", diffs);
+		Err("Not implemented".to_string())
 	}
 }
