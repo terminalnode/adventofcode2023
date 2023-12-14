@@ -24,15 +24,56 @@ impl Solution for Day14 {
 		let mut matrix = self.parse()?;
 		for y in matrix.y_range() {
 			for x in matrix.x_range() {
-				roll_up(&mut matrix, x, y);
+				roll_north(&mut matrix, x, y);
 			}
 		}
 
 		Ok(count_load(&matrix).to_string())
 	}
+
+	fn part_two(&self) -> Result<String, String> {
+		let mut matrix = self.parse()?;
+		let mut history = vec![];
+
+		loop {
+			for y in matrix.y_range() {
+				for x in matrix.x_range() {
+					roll_north(&mut matrix, x, y);
+				}
+			}
+
+			for y in matrix.y_range() {
+				for x in matrix.x_range() {
+					roll_west(&mut matrix, x, y);
+				}
+			}
+
+			for y in matrix.y_range().rev() {
+				for x in matrix.x_range() {
+					roll_south(&mut matrix, x, y);
+				}
+			}
+
+			for y in matrix.y_range() {
+				for x in matrix.x_range().rev() {
+					roll_east(&mut matrix, x, y);
+				}
+			}
+
+			if history.contains(&matrix) { break; }
+			history.push(matrix.clone());
+		}
+
+		let offset = history.iter().position(|m| m == &matrix).unwrap();
+		let trim_len = history.len() - offset;
+		let idx = (1_000_000_000 - offset - 1) % trim_len;
+		let final_m = history.iter().skip(offset).nth(idx).unwrap();
+
+		Ok(count_load(&final_m).to_string())
+	}
 }
 
-fn roll_up(
+fn roll_north(
 	matrix: &mut Matrix,
 	x: usize,
 	y: usize,
@@ -44,7 +85,55 @@ fn roll_up(
 	if here == Some(&'O') && there == Some(&'.') {
 		matrix.set_xy(x, y, '.');
 		matrix.set_xy(x, y - 1, 'O');
-		roll_up(matrix, x, y - 1);
+		roll_north(matrix, x, y - 1);
+	}
+}
+
+fn roll_south(
+	matrix: &mut Matrix,
+	x: usize,
+	y: usize,
+) {
+	if y == matrix.y_len() - 1 { return; }
+	let here = matrix.get_xy(x, y);
+	let there = matrix.get_xy(x, y + 1);
+
+	if here == Some(&'O') && there == Some(&'.') {
+		matrix.set_xy(x, y, '.');
+		matrix.set_xy(x, y + 1, 'O');
+		roll_south(matrix, x, y + 1);
+	}
+}
+
+fn roll_west(
+	matrix: &mut Matrix,
+	x: usize,
+	y: usize,
+) {
+	if x == 0 { return; }
+	let here = matrix.get_xy(x, y);
+	let there = matrix.get_xy(x - 1, y);
+
+	if here == Some(&'O') && there == Some(&'.') {
+		matrix.set_xy(x, y, '.');
+		matrix.set_xy(x - 1, y, 'O');
+		roll_west(matrix, x - 1, y);
+	}
+}
+
+fn roll_east(
+	matrix: &mut Matrix,
+	x: usize,
+	y: usize,
+) {
+	if x == matrix.x_len() - 1 { return; }
+	let here = matrix.get_xy(x, y);
+	let there = matrix.get_xy(x + 1, y);
+
+	if here == Some(&'O') && there == Some(&'.') {
+		matrix.set_xy(x, y, '.');
+		matrix.set_xy(x + 1, y, 'O');
+		roll_east(matrix, x + 1, y);
 	}
 }
 
