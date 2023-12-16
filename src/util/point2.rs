@@ -1,8 +1,32 @@
+use crate::util::Direction;
+
 pub type Point2D = (usize, usize);
 
 pub trait Point2DExt {
 	fn x(&self) -> usize;
 	fn y(&self) -> usize;
+
+	fn move_dir(
+		&self,
+		direction: &Direction,
+	) -> Option<Point2D> {
+		match direction {
+			Direction::North => self.north(),
+			Direction::South => self.south(),
+			Direction::East => self.east(),
+			Direction::West => self.west(),
+		}
+	}
+
+	fn move_opt_dir(
+		&self,
+		direction: Option<Direction>,
+	) -> Option<Point2D> {
+		match direction {
+			Some(x) => self.move_dir(&x),
+			None => None,
+		}
+	}
 
 	fn north(&self) -> Option<Point2D> {
 		if self.y() > 0 {
@@ -42,7 +66,7 @@ pub trait Point2DExt {
 		max_x: usize,
 		max_y: usize,
 	) -> bool {
-			self.x() <= max_x && self.y() <= max_y
+		self.x() <= max_x && self.y() <= max_y
 	}
 }
 

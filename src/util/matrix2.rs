@@ -21,6 +21,13 @@ pub trait Matrix2DExt<T> where T: PartialEq {
 		self.set_xy(point.x(), point.y(), value);
 	}
 
+	fn is_edge(&self, point: Point2D) -> bool {
+		point.x() == 0
+			|| point.y() == 0
+			|| point.x() == self.x_len() - 1
+			|| point.y() == self.y_len() - 1
+	}
+
 	fn find_all(&self, value: &T) -> Vec<Point2D> {
 		let mut points = vec![];
 		for y in self.y_range() {
