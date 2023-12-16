@@ -1,6 +1,7 @@
 use std::collections::{HashMap, HashSet, VecDeque};
+use Direction::{East, North, South, West};
 use crate::solution::Solution;
-use crate::util::{Point2D, Point2DExt};
+use crate::util::{Direction, Point2D, Point2DExt};
 
 pub struct Day10 {
 	file: String,
@@ -39,9 +40,6 @@ struct MapInfo {
 	max_x: usize,
 	max_y: usize,
 }
-
-#[derive(Debug, PartialEq)]
-enum Direction { North, South, East, West }
 
 impl MapInfo {
 	fn get_char(&self, point: Option<Point2D>) -> Option<char> {
@@ -175,40 +173,40 @@ impl Solution for Day10 {
 		let mut current = visited.clone().into_iter()
 			.find(|(x, y)| info2.get_char(Some((*x, *y))) == Some('|'))
 			.ok_or(format!("Could not find starting position"))?;
-		let mut direction = Direction::North;
+		let mut direction = North;
 
 		while !revisited.contains(&current) {
 			let curr_char = info2.get_char(Some(current)).unwrap();
 
 			let (new_side1, new_side2) = match curr_char {
 				'|' => match direction {
-					Direction::North => (vec![current.west()], vec![current.east()]),
-					Direction::South => (vec![current.east()], vec![current.west()]),
+					North => (vec![current.west()], vec![current.east()]),
+					South => (vec![current.east()], vec![current.west()]),
 					x => return Err(format!("impossible | ({x:?})")),
 				}
 				'-' => match direction {
-					Direction::East => (vec![current.north()], vec![current.south()]),
-					Direction::West => (vec![current.south()], vec![current.north()]),
+					East => (vec![current.north()], vec![current.south()]),
+					West => (vec![current.south()], vec![current.north()]),
 					x => return Err(format!("impossible - ({x:?})")),
 				}
 				'F' => match direction {
-					Direction::West => (vec![], vec![current.west(), current.north()]),
-					Direction::North => (vec![current.west(), current.north()], vec![]),
+					West => (vec![], vec![current.west(), current.north()]),
+					North => (vec![current.west(), current.north()], vec![]),
 					x => return Err(format!("impossible F ({x:?})")),
 				}
 				'J' => match direction {
-					Direction::South => (vec![current.east(), current.south()], vec![]),
-					Direction::East => (vec![], vec![current.east(), current.south()]),
+					South => (vec![current.east(), current.south()], vec![]),
+					East => (vec![], vec![current.east(), current.south()]),
 					x => return Err(format!("impossible J ({x:?})")),
 				}
 				'L' => match direction {
-					Direction::South => (vec![], vec![current.south(), current.west()]),
-					Direction::West => (vec![current.south(), current.west()], vec![]),
+					South => (vec![], vec![current.south(), current.west()]),
+					West => (vec![current.south(), current.west()], vec![]),
 					x => return Err(format!("impossible L ({x:?})")),
 				}
 				'7' => match direction {
-					Direction::North => (vec![], vec![current.north(), current.east()]),
-					Direction::East => (vec![current.north(), current.east()], vec![]),
+					North => (vec![], vec![current.north(), current.east()]),
+					East => (vec![current.north(), current.east()], vec![]),
 					x => return Err(format!("impossible 7 ({x:?})")),
 				}
 				'S' => (vec![], vec![]),
@@ -222,33 +220,33 @@ impl Solution for Day10 {
 			direction = match curr_char {
 				// TODO infer S, until then... manually edit how S is handled
 				'S' => match direction {
-					Direction::East => Direction::South,
-					Direction::North => Direction::West,
+					East => South,
+					North => West,
 					x => return Err(format!("Can not go into S from {x:?} at {current:?}")),
 				}
 
 				'J' => match direction {
-					Direction::South => Direction::West,
-					Direction::East => Direction::North,
+					South => West,
+					East => North,
 					x => return Err(format!("Can not go into J from {x:?} at {current:?}")),
 				}
 
 				'F' => match direction {
-					Direction::North => Direction::East,
-					Direction::West => Direction::South,
+					North => East,
+					West => South,
 					x => return Err(format!("Can not go into F from {x:?} at {current:?}")),
 				}
 
 				'L' => match direction {
-					Direction::South => Direction::East,
-					Direction::West => Direction::North,
+					South => East,
+					West => North,
 					x => return Err(format!("Can not go into L from {x:?} at {current:?}")),
 				}
 
 				'7' =>
 					match direction {
-						Direction::North => Direction::West,
-						Direction::East => Direction::South,
+						North => West,
+						East => South,
 						x => return Err(format!("Can not go into 7 from {x:?} at {current:?}")),
 					}
 
@@ -258,10 +256,10 @@ impl Solution for Day10 {
 
 			revisited.insert(current);
 			current = match direction {
-				Direction::North => current.north(),
-				Direction::South => current.south(),
-				Direction::East => current.east(),
-				Direction::West => current.west(),
+				North => current.north(),
+				South => current.south(),
+				East => current.east(),
+				West => current.west(),
 			}.unwrap();
 		}
 

@@ -1,19 +1,15 @@
 use std::collections::{HashMap, HashSet};
+use RelativeDirection::{Left, Right};
 use crate::solution::Solution;
+use crate::util::RelativeDirection;
 
 pub struct Day08 {
 	file: String,
 }
 
 #[derive(Debug)]
-enum Direction {
-	Right,
-	Left,
-}
-
-#[derive(Debug)]
 struct InputData {
-	directions: Vec<Direction>,
+	directions: Vec<RelativeDirection>,
 	map: HashMap<String, (String, String)>,
 	last_chars: HashMap<String, char>,
 }
@@ -29,8 +25,8 @@ impl Day08 {
 		let rl_chars = lines.next().ok_or("failed to extract right/left chars")?.chars();
 		for c in rl_chars {
 			match c {
-				'R' => directions.push(Direction::Right),
-				'L' => directions.push(Direction::Left),
+				'R' => directions.push(Right),
+				'L' => directions.push(Left),
 				_ => return Err(format!("invalid direction: {c}")),
 			}
 		}
@@ -74,8 +70,8 @@ impl Solution for Day08 {
 			steps += 1;
 			let (left, right) = &input.map[position];
 			match direction {
-				Direction::Right => position = &right,
-				Direction::Left => position = &left,
+				Right => position = &right,
+				Left => position = &left,
 			}
 
 			if position == "ZZZ" { break; }
@@ -103,8 +99,8 @@ impl Solution for Day08 {
 					steps += 1;
 					let (left, right) = &input.map[&curr];
 					curr = match direction {
-						Direction::Right => right.clone(),
-						Direction::Left => left.clone(),
+						Right => right.clone(),
+						Left => left.clone(),
 					};
 
 					if input.last_chars[&curr] == 'Z' { winners.push(steps) }

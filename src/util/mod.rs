@@ -7,3 +7,4 @@ pub use point2::Point2DExt;
 pub use matrix2::Matrix2D;
 pub use matrix2::Matrix2DExt;
 pub use direction::Direction;
+pub use direction::RelativeDirection;
