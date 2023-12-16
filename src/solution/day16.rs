@@ -59,33 +59,56 @@ impl Solution for Day16 {
 	fn get_file_name(&self) -> &str { &self.file }
 
 	fn part_one(&self) -> Result<String, String> {
-		let mut rays = HashSet::new();
-		rays.insert(Ray { pos: (0, 0), dir: East });
+		let grid = self.parse()?;
+		let start = Ray { pos: (0, 0), dir: East };
+		Ok(solve(&grid, start)?.to_string())
+	}
 
-		let map = self.parse()?;
-		let mut queue = VecDeque::from(vec![Ray { pos: (0, 0), dir: East }]);
+	fn part_two(&self) -> Result<String, String> {
+		let grid = self.parse()?;
 
-		while let Some(ray) = queue.pop_front() {
-			let (r1, r2) = move_ray(ray, &map.map, map.max_x, map.max_y);
-
-			if let Some(r1) = r1 {
-				if !rays.contains(&r1) {
-					rays.insert(r1.clone());
-					queue.push_back(r1);
-				}
-			}
-
-			if let Some(r2) = r2 {
-				if !rays.contains(&r2) {
-					rays.insert(r2.clone());
-					queue.push_back(r2);
-				}
+		let mut max = 0;
+		for x in 0..=grid.max_x {
+			for y in 0..=grid.max_y {
+				if x == 0 { max = max.max(solve(&grid, Ray { pos: (x, y), dir: East })?); }
+				if x == grid.max_x { max = max.max(solve(&grid, Ray { pos: (x, y), dir: West })?); }
+				if y == 0 { max = max.max(solve(&grid, Ray { pos: (x, y), dir: South })?); }
+				if y == grid.max_y { max = max.max(solve(&grid, Ray { pos: (x, y), dir: North })?); }
 			}
 		}
 
-		let positions = rays.iter().map(|p| p.pos).collect::<HashSet<Point2D>>().len();
-		Ok(positions.to_string())
+		Ok(max.to_string())
 	}
+}
+
+fn solve(
+	grid: &Grid,
+	start: Ray,
+) -> Result<usize, String> {
+	let mut rays = HashSet::new();
+	rays.insert(start.clone());
+
+	let mut queue = VecDeque::from(vec![start]);
+
+	while let Some(ray) = queue.pop_front() {
+		let (r1, r2) = move_ray(ray, &grid.map, grid.max_x, grid.max_y);
+
+		if let Some(r1) = r1 {
+			if !rays.contains(&r1) {
+				rays.insert(r1.clone());
+				queue.push_back(r1);
+			}
+		}
+
+		if let Some(r2) = r2 {
+			if !rays.contains(&r2) {
+				rays.insert(r2.clone());
+				queue.push_back(r2);
+			}
+		}
+	}
+
+	Ok(rays.iter().map(|p| p.pos).collect::<HashSet<Point2D>>().len())
 }
 
 fn move_ray(
