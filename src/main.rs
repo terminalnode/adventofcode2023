@@ -34,10 +34,8 @@ fn main() {
 			.unwrap_or_else(|_| print_error("Day must be a number!", &program, &opts)),
 	};
 
-	let file = match matches.opt_str("f") {
-		None => format!("day{day:02}.txt"),
-		Some(file) => file,
-	};
+	let file = matches.opt_str("f")
+		.unwrap_or_else(|| format!("data/{day:02}"));
 
 	let part_one = matches.opt_present("one");
 	let part_two = matches.opt_present("two");

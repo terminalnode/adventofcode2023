@@ -4,7 +4,7 @@ use std::str::FromStr;
 pub trait Solution {
 	fn new(filename: &str) -> Self where Self: Sized;
 	fn get_file_name(&self) -> &str;
-	fn get_file_path(&self) -> String { format!("data/{}", self.get_file_name()) }
+	fn get_file_path(&self) -> String { format!("{}", self.get_file_name()) }
 
 	fn part_one(&self) -> Result<String, String> {
 		Err("Solution not yet implemented!".to_string())
