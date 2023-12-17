@@ -38,8 +38,15 @@ impl Walker {
 		&self,
 		dir: Direction,
 		grid: &Grid,
+		min_steps: usize,
+		max_steps: usize,
 	) -> Option<Walker> {
-		if dir == self.dir && self.steps == 3 { return None; }
+		if dir == self.dir && self.steps == max_steps {
+			return None;
+		} else if dir != self.dir && self.steps < min_steps {
+			return None;
+		}
+
 		match self.pos.move_dir(&dir) {
 			Some(pos) if pos.in_matrix(&grid) => {
 				let cost = self.cost + *grid.get_point(pos).unwrap();
@@ -65,29 +72,25 @@ impl Day17 {
 
 fn cheapest_path(
 	grid: &Grid,
-	start: &Point2D,
-	direction: &Direction,
+	min_steps: usize,
+	max_steps: usize,
 ) -> usize {
 	let goal: Point2D = (grid.x_len() - 1, grid.y_len() - 1);
 	let all_dir = vec![North, South, East, West];
 
 	let mut cost_map = HashMap::new();
-	cost_map.insert(start.clone(), 0);
+	cost_map.insert((0,0), 0);
 
-	let mut walkers = BinaryHeap::from(vec![Walker {
-		pos: start.clone(),
-		dir: direction.clone(),
-		steps: 0,
-		cost: 0,
-		suboptimal_steps: 0,
-	}]);
+	let w1 = Walker { pos: (0, 1), dir: South, steps: 1, cost: grid[1][0], suboptimal_steps: 0 };
+	let w2 = Walker { pos: (1, 0), dir: East, steps: 1, cost: grid[0][1], suboptimal_steps: 0 };
+	let mut walkers = BinaryHeap::from(vec![w1, w2]);
 
 	let mut best_goal = usize::MAX;
 
 	while let Some(walker) = walkers.pop() {
 		let new_walkers = all_dir.iter()
 			.filter(|dir| dir != &&walker.dir.opposite())
-			.filter_map(|&dir| walker.walk(dir, &grid));
+			.filter_map(|&dir| walker.walk(dir, &grid, min_steps, max_steps));
 
 		for mut new_walker in new_walkers {
 			if new_walker.cost >= best_goal { continue; }
@@ -126,7 +129,13 @@ impl Solution for Day17 {
 
 	fn part_one(&self) -> Result<String, String> {
 		let grid = self.parse()?;
-		let cheapest = cheapest_path(&grid, &(0, 0), &South);
+		let cheapest = cheapest_path(&grid, 1, 3);
+		Ok(cheapest.to_string())
+	}
+
+	fn part_two(&self) -> Result<String, String> {
+		let grid = self.parse()?;
+		let cheapest = cheapest_path(&grid, 4, 10);
 		Ok(cheapest.to_string())
 	}
 }
