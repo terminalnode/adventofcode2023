@@ -81,10 +81,10 @@ fn cheapest_path(
 	let mut cost_map = HashMap::new();
 	cost_map.insert((0,0), 0);
 
+	// Starting positions
 	let w1 = Walker { pos: (0, 1), dir: South, steps: 1, cost: grid[1][0], suboptimal_steps: 0 };
 	let w2 = Walker { pos: (1, 0), dir: East, steps: 1, cost: grid[0][1], suboptimal_steps: 0 };
 	let mut walkers = BinaryHeap::from(vec![w1, w2]);
-
 	let mut best_goal = usize::MAX;
 
 	while let Some(walker) = walkers.pop() {
@@ -94,24 +94,26 @@ fn cheapest_path(
 
 		for mut new_walker in new_walkers {
 			if new_walker.cost >= best_goal { continue; }
+			if new_walker.steps < min_steps {
+				walkers.push(new_walker);
+				continue;
+			}
 
-			if let Some(cost) = cost_map.get(&new_walker.pos) {
-				if new_walker.cost >= *cost {
-					if new_walker.suboptimal_steps >= 4 {
+			match cost_map.get(&new_walker.pos) {
+				Some(cost) if new_walker.cost >= *cost => {
+					if new_walker.suboptimal_steps >= 7 { // this might need to be adjusted
 						continue;
 					} else {
 						new_walker.suboptimal_steps += 1;
 					}
-				} else {
+				},
+				_ => {
 					new_walker.suboptimal_steps = 0;
 					cost_map.insert(new_walker.pos, new_walker.cost);
-				}
-			} else {
-				new_walker.suboptimal_steps = 0;
-				cost_map.insert(new_walker.pos, new_walker.cost);
-			}
+				},
+			};
 
-			if new_walker.pos == goal {
+			if new_walker.pos == goal && new_walker.steps >= min_steps {
 				if new_walker.cost < best_goal { best_goal = new_walker.cost; }
 				continue;
 			} else {
@@ -129,7 +131,7 @@ impl Solution for Day17 {
 
 	fn part_one(&self) -> Result<String, String> {
 		let grid = self.parse()?;
-		let cheapest = cheapest_path(&grid, 1, 3);
+		let cheapest = cheapest_path(&grid, 0, 3);
 		Ok(cheapest.to_string())
 	}
 
