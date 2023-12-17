@@ -1,4 +1,4 @@
-use crate::util::Direction;
+use crate::util::{Direction, Matrix2D, Matrix2DExt};
 
 pub type Point2D = (usize, usize);
 
@@ -67,6 +67,13 @@ pub trait Point2DExt {
 		max_y: usize,
 	) -> bool {
 		self.x() <= max_x && self.y() <= max_y
+	}
+
+	fn in_matrix<T : PartialEq>(
+		&self,
+		matrix: &Matrix2D<T>,
+	) -> bool {
+		self.in_grid(matrix.x_len() - 1, matrix.y_len() - 1)
 	}
 }
 
