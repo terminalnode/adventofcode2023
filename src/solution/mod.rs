@@ -16,6 +16,7 @@ mod day14;
 mod day15;
 mod day16;
 mod day17;
+mod day18;
 
 pub use solution::Solution;
 pub use solution::PlaceholderSolution;
@@ -36,3 +37,4 @@ pub use day14::Day14;
 pub use day15::Day15;
 pub use day16::Day16;
 pub use day17::Day17;
+pub use day18::Day18;
