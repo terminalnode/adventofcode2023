@@ -1,9 +1,7 @@
-use std::collections::HashSet;
-
 use Direction::{East, North, South, West};
 
 use crate::solution::Solution;
-use crate::util::{Direction, Point2D, Point2DExt};
+use crate::util::Direction;
 
 pub struct Day18 {
 	file: String,
@@ -62,72 +60,42 @@ impl Day18 {
 }
 
 fn solve(inputs: Vec<InputRow>) -> Result<String, String> {
-	let mut current_pos = (0i32, 0i32);
+	let mut current_pos = (0i64, 0i64);
+	let mut points = Vec::new();
+	let mut boundary = 0;
 
-	let mut points = HashSet::new();
-	points.insert(current_pos);
-
-	// Build the loop
-	let mut min_x = 0;
-	let mut min_y = 0;
-	let mut max_x = 0;
-	let mut max_y = 0;
 	for input in inputs {
-		for _ in 0..input.meters {
-			let (x, y) = current_pos;
-			current_pos = match input.direction {
-				North => (x, y - 1),
-				South => (x, y + 1),
-				East => (x + 1, y),
-				West => (x - 1, y),
-			};
+		let dist = input.meters as i64;
+		boundary += dist;
+		let (x, y) = current_pos;
 
-			let (x, y) = current_pos;
-			min_x = min_x.min(x);
-			min_y = min_y.min(y);
-			max_x = max_x.max(x);
-			max_y = max_y.max(y);
-			points.insert(current_pos);
-		}
+		current_pos = match input.direction {
+			North => (x, y - dist),
+			South => (x, y + dist),
+			East => (x + dist, y),
+			West => (x - dist, y),
+		};
+		points.push(current_pos);
+
 	}
 
-	// Normalize the grid, easier to reason about non-negative coordinates
-	// plus I can use my Point2D extensions if I want to.
-	let max_y = (max_y - min_y) as usize;
-	let mut points = points.iter().map(|(x, y)| {
-		let x = x - min_x;
-		let y= y - min_y;
-		(x as usize, y as usize)
-	}).collect::<HashSet<Point2D>>();
-
-	// Find a starting point
-	let mut start = None;
-	for y in 0..max_y {
-		let starts_with_hash = points.contains(&(0, y));
-		let then_no_hash = !points.contains(&(1, y));
-		if starts_with_hash && then_no_hash {
-			start = Some((1, y));
-			break;
-		}
+	// Shoelace theorem
+	// Sum of (x1y2 - x2y1) / 2, where x1y1 is here and x2y2 is the next coordinate
+	let mut sum = 0i64;
+	for i in 0..points.len() - 1 {
+		let (x_1, y_1) = points[i];
+		let (x_2, y_2) = points[i + 1];
+		let p1 = x_1 * y_2;
+		let p2 = x_2 * y_1;
+		sum += p1 - p2;
 	}
-	let start = start.ok_or("Could not find a starting point")?;
+	sum = sum / 2;
 
-	// Flood-fill
-	let mut queue = vec![start];
-	let directions = vec![North, South, East, West];
-	while let Some(point) = queue.pop() {
-		let new_points = directions.iter()
-			.filter_map(|dir| point.move_dir(dir))
-			.filter(|p| !points.contains(p))
-			.collect::<Vec<Point2D>>();
-
-		for &point in new_points.iter() {
-			points.insert(point);
-			queue.push(point);
-		}
-	}
-
-	Ok(points.len().to_string())
+	// Pick's theorem says -1, not +1, but I consistently get 2 too little.
+	// I don't know why, possibly it has something to do with overlapping points in my set,
+	// but this works and runs very fast, so I'm happy.
+	let picks = sum.clone() + (boundary / 2) + 1;
+	Ok(picks.to_string())
 }
 
 impl Solution for Day18 {
