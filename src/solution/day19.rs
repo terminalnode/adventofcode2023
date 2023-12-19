@@ -21,16 +21,44 @@ struct Part {
 	s: usize,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Rule {
 	condition: Condition,
 	then: String,
 }
 
-#[derive(Debug)]
-enum Condition {
-	Auto,
-	Between(char, usize, usize),
+#[derive(Debug, Clone)]
+struct Condition {
+	x: (usize, usize),
+	m: (usize, usize),
+	a: (usize, usize),
+	s: (usize, usize),
+}
+
+impl Condition {
+	fn auto() -> Self { Condition { x: (0, 4000), m: (0, 4000), a: (0, 4000), s: (0, 4000) } }
+	fn x(bounds: (usize, usize)) -> Self { Condition { x: bounds, m: (0, 4000), a: (0, 4000), s: (0, 4000) } }
+	fn m(bounds: (usize, usize)) -> Self { Condition { m: bounds, x: (0, 4000), a: (0, 4000), s: (0, 4000) } }
+	fn a(bounds: (usize, usize)) -> Self { Condition { a: bounds, m: (0, 4000), x: (0, 4000), s: (0, 4000) } }
+	fn s(bounds: (usize, usize)) -> Self { Condition { s: bounds, m: (0, 4000), a: (0, 4000), x: (0, 4000) } }
+
+	fn new(c: char, bounds: (usize, usize)) -> Self {
+		match c {
+			'x' => Condition::x(bounds),
+			'm' => Condition::m(bounds),
+			'a' => Condition::a(bounds),
+			's' => Condition::s(bounds),
+			_ => panic!("Invalid condition"),
+		}
+	}
+
+	fn test(&self, part: &Part) -> bool {
+		let x = part.x >= self.x.0 && part.x <= self.x.1;
+		let m = part.m >= self.m.0 && part.m <= self.m.1;
+		let a = part.a >= self.a.0 && part.a <= self.a.1;
+		let s = part.s >= self.s.0 && part.s <= self.s.1;
+		x && m && a && s
+	}
 }
 
 impl Day19 {
@@ -92,15 +120,17 @@ impl Day19 {
 			Some(s) => {
 				let mut chars = s.chars();
 				let target = chars.next().ok_or(format!("No target for rule {s}"))?;
-				let num = s[2..].parse::<usize>().map_err(|_| format!("Failed to parse number in {s}"))?;
 
-				match chars.next() {
-					Some('>') => Condition::Between(target, num + 1, 4000),
-					Some('<') => Condition::Between(target, 0, num - 1),
+				let num = s[2..].parse::<usize>().map_err(|_| format!("Failed to parse number in {s}"))?;
+				let bounds = match chars.next() {
+					Some('>') => (num + 1, 4000),
+					Some('<') => (0, num - 1),
 					_ => return Err(format!("Invalid target in {s}")),
-				}
+				};
+
+				Condition::new(target, bounds)
 			}
-			None => Condition::Auto,
+			None => Condition::auto(),
 		};
 
 		Ok(Rule { condition, then })
@@ -132,23 +162,8 @@ impl Solution for Day19 {
 
 fn evaluate(part: &Part, rules: &Vec<Rule>) -> Result<Option<String>, String> {
 	for rule in rules {
-		let out = match rule.condition {
-			Condition::Auto => Some(&rule.then),
-			Condition::Between(c, lower, upper) => {
-				let value = match c {
-					'x' => part.x,
-					'm' => part.m,
-					'a' => part.a,
-					's' => part.s,
-					_ => return Err(format!("Invalid target {c}")),
-				};
-				if value >= lower && value <= upper { Some(&rule.then) } else { None }
-			}
-		};
-
-		if let Some(x) = out {
-			return Ok(Some(x.to_string()));
-		}
+		let out = if rule.condition.test(part) { Some(&rule.then) } else { None };
+		if let Some(x) = out { return Ok(Some(x.to_string())); }
 	}
 
 	Ok(None)
