@@ -30,8 +30,7 @@ struct Rule {
 #[derive(Debug)]
 enum Condition {
 	Auto,
-	Greater(char, usize),
-	Less(char, usize),
+	Between(char, usize, usize),
 }
 
 impl Day19 {
@@ -96,8 +95,8 @@ impl Day19 {
 				let num = s[2..].parse::<usize>().map_err(|_| format!("Failed to parse number in {s}"))?;
 
 				match chars.next() {
-					Some('>') => Condition::Greater(target, num),
-					Some('<') => Condition::Less(target, num),
+					Some('>') => Condition::Between(target, num + 1, 4000),
+					Some('<') => Condition::Between(target, 0, num - 1),
 					_ => return Err(format!("Invalid target in {s}")),
 				}
 			}
@@ -135,7 +134,7 @@ fn evaluate(part: &Part, rules: &Vec<Rule>) -> Result<Option<String>, String> {
 	for rule in rules {
 		let out = match rule.condition {
 			Condition::Auto => Some(&rule.then),
-			Condition::Greater(c, n) => {
+			Condition::Between(c, lower, upper) => {
 				let value = match c {
 					'x' => part.x,
 					'm' => part.m,
@@ -143,17 +142,7 @@ fn evaluate(part: &Part, rules: &Vec<Rule>) -> Result<Option<String>, String> {
 					's' => part.s,
 					_ => return Err(format!("Invalid target {c}")),
 				};
-				if value > n { Some(&rule.then) } else { None }
-			}
-			Condition::Less(c, n) => {
-				let value = match c {
-					'x' => part.x,
-					'm' => part.m,
-					'a' => part.a,
-					's' => part.s,
-					_ => return Err(format!("Invalid target {c}")),
-				};
-				if value < n { Some(&rule.then) } else { None }
+				if value >= lower && value <= upper { Some(&rule.then) } else { None }
 			}
 		};
 
