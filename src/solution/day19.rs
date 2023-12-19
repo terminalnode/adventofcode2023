@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::ops::RangeInclusive;
 
 use regex::Regex;
 
@@ -29,20 +30,20 @@ struct Rule {
 
 #[derive(Debug, Clone)]
 struct Condition {
-	x: (usize, usize),
-	m: (usize, usize),
-	a: (usize, usize),
-	s: (usize, usize),
+	x: RangeInclusive<usize>,
+	m: RangeInclusive<usize>,
+	a: RangeInclusive<usize>,
+	s: RangeInclusive<usize>,
 }
 
 impl Condition {
-	fn auto() -> Self { Condition { x: (0, 4000), m: (0, 4000), a: (0, 4000), s: (0, 4000) } }
-	fn x(bounds: (usize, usize)) -> Self { Condition { x: bounds, m: (0, 4000), a: (0, 4000), s: (0, 4000) } }
-	fn m(bounds: (usize, usize)) -> Self { Condition { m: bounds, x: (0, 4000), a: (0, 4000), s: (0, 4000) } }
-	fn a(bounds: (usize, usize)) -> Self { Condition { a: bounds, m: (0, 4000), x: (0, 4000), s: (0, 4000) } }
-	fn s(bounds: (usize, usize)) -> Self { Condition { s: bounds, m: (0, 4000), a: (0, 4000), x: (0, 4000) } }
+	fn auto() -> Self { Condition { x: 0..=4000, m: 0..=4000, a: 0..=4000, s: 0..=4000 } }
+	fn x(bounds: RangeInclusive<usize>) -> Self { Condition { x: bounds, m: 0..=4000, a: 0..=4000, s: 0..=4000 } }
+	fn m(bounds: RangeInclusive<usize>) -> Self { Condition { m: bounds, x: 0..=4000, a: 0..=4000, s: 0..=4000 } }
+	fn a(bounds: RangeInclusive<usize>) -> Self { Condition { a: bounds, m: 0..=4000, x: 0..=4000, s: 0..=4000 } }
+	fn s(bounds: RangeInclusive<usize>) -> Self { Condition { s: bounds, m: 0..=4000, a: 0..=4000, x: 0..=4000 } }
 
-	fn new(c: char, bounds: (usize, usize)) -> Self {
+	fn new(c: char, bounds: RangeInclusive<usize>) -> Self {
 		match c {
 			'x' => Condition::x(bounds),
 			'm' => Condition::m(bounds),
@@ -53,11 +54,10 @@ impl Condition {
 	}
 
 	fn test(&self, part: &Part) -> bool {
-		let x = part.x >= self.x.0 && part.x <= self.x.1;
-		let m = part.m >= self.m.0 && part.m <= self.m.1;
-		let a = part.a >= self.a.0 && part.a <= self.a.1;
-		let s = part.s >= self.s.0 && part.s <= self.s.1;
-		x && m && a && s
+		self.x.contains(&part.x)
+			&& self.m.contains(&part.m)
+			&& self.a.contains(&part.a)
+			&& self.s.contains(&part.s)
 	}
 }
 
@@ -123,8 +123,8 @@ impl Day19 {
 
 				let num = s[2..].parse::<usize>().map_err(|_| format!("Failed to parse number in {s}"))?;
 				let bounds = match chars.next() {
-					Some('>') => (num + 1, 4000),
-					Some('<') => (0, num - 1),
+					Some('>') => (num + 1)..=4000,
+					Some('<') => 0..=(num - 1),
 					_ => return Err(format!("Invalid target in {s}")),
 				};
 
