@@ -59,6 +59,7 @@ fn main() {
 		17 => Box::new(Day17::new(&file)),
 		18 => Box::new(Day18::new(&file)),
 		19 => Box::new(Day19::new(&file)),
+		20 => Box::new(Day20::new(&file)),
 		_ => Box::new(PlaceholderSolution::new(&file)),
 	};
 
