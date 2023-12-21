@@ -40,7 +40,9 @@ impl Solution for Day21 {
 		let directions = vec![North, South, East, West];
 		let mut queue = VecDeque::from(vec![(0usize, start)]);
 		let mut done = HashSet::new();
+
 		let done_steps = 64usize;
+		let mod_2 = done_steps % 2;
 
 		while let Some((steps, pos)) = queue.pop_front() {
 			let new_positions = directions.iter()
@@ -55,7 +57,7 @@ impl Solution for Day21 {
 					continue;
 				}
 
-				if new_steps % 2 == 0 {
+				if new_steps % 2 == mod_2 {
 					if done.contains(&new_pos) { continue; }
 					else { done.insert(new_pos); }
 				}
